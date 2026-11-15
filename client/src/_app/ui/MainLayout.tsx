@@ -3,7 +3,7 @@ import { Tabs } from "expo-router";
 
 import { BottomNav } from "@/widgets/bottom-nav";
 
-export default function MainLayout() {
+export function MainLayout() {
   return (
     <LinearGradient
       colors={["#06B6D4", "#4F46E5"]}

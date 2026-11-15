@@ -1,24 +1,17 @@
-import "../global.css";
+import "../styles/global.css";
 import * as SplashScreen from "expo-splash-screen";
 import { Stack, router } from "expo-router";
 import { useEffect } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 
 import { userService } from "@/entities/user";
 import { queryKeys } from "@/shared/api";
 
+import { queryClient } from "../model/query-client";
+
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: 1,
-    },
-  },
-});
-
-export default function RootLayout() {
+export function RootLayout() {
   useEffect(() => {
     queryClient
       .fetchQuery({
