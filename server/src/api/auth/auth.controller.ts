@@ -8,11 +8,11 @@ import {
   Req,
   Res,
   UnauthorizedException,
-  UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
-import { AuthGuard } from './guards/auth.guard';
+import { CurrentUser } from './decorators/current-user.decorator';
+import { Public } from './decorators/auth-mode.decorator';
 import { ZodValidationPipe } from '../../shared/pipe/zod-validation.pipe';
 import {
   signInSchema,
@@ -29,6 +29,7 @@ export class AuthController {
     private tokens: TokenService,
   ) {}
 
+  @Public()
   @Post('sign-up')
   async signUp(
     @Body(new ZodValidationPipe(signUpSchema)) body: SignUpDto,
@@ -38,6 +39,7 @@ export class AuthController {
     return this.startSession(user, res);
   }
 
+  @Public()
   @Post('sign-in')
   @HttpCode(200)
   async signIn(
@@ -48,6 +50,7 @@ export class AuthController {
     return this.startSession(user, res);
   }
 
+  @Public()
   @Post('refresh')
   @HttpCode(200)
   async refresh(
@@ -58,6 +61,7 @@ export class AuthController {
     return { accessToken };
   }
 
+  @Public()
   @Post('sign-out')
   @HttpCode(200)
   async signOut(
@@ -69,21 +73,19 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(AuthGuard)
-  async me(@Req() req: Request) {
-    const user = await this.auth.findById(req.userId!);
+  async me(@CurrentUser() userId: string) {
+    const user = await this.auth.findById(userId);
     if (!user) throw new UnauthorizedException();
     return user;
   }
 
   @Delete('account')
-  @UseGuards(AuthGuard)
   @HttpCode(200)
   async deleteAccount(
-    @Req() req: Request,
+    @CurrentUser() userId: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    await this.auth.deleteAccount(req.userId!);
+    await this.auth.deleteAccount(userId);
     this.tokens.clearCookie(res);
     return { ok: true };
   }

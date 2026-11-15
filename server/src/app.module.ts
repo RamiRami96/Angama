@@ -5,11 +5,15 @@ import { AuthModule } from './api/auth/auth.module';
 import { ClubsModule } from './api/clubs/clubs.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './api/users/users.module';
+import { parseEnv } from './config/env';
 import { AllExceptionsFilter } from './shared/filter/all-exceptions.filter';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validate: (config) => parseEnv(config as NodeJS.ProcessEnv),
+    }),
     PrismaModule,
     AuthModule,
     ClubsModule,

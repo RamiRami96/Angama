@@ -7,10 +7,9 @@ import {
   Param,
   Patch,
   Post,
-  Req,
-  UnauthorizedException,
 } from '@nestjs/common';
-import type { Request } from 'express';
+import { OptionalAuth } from '../auth/decorators/auth-mode.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../shared/pipe/zod-validation.pipe';
 import { createClubSchema, type CreateClubDto } from './clubs.schemas';
 import { ClubsService } from './clubs.service';
@@ -19,39 +18,41 @@ import { ClubsService } from './clubs.service';
 export class ClubsController {
   constructor(private clubs: ClubsService) {}
 
+  @OptionalAuth()
   @Get()
-  getAll(@Req() req: Request) {
-    return this.clubs.getAll(this.userId(req));
+  getAll(@CurrentUser() userId?: string) {
+    return this.clubs.getAll(userId);
   }
 
+  @OptionalAuth()
   @Get(':id')
-  getOne(@Param('id') id: string, @Req() req: Request) {
-    return this.clubs.getOne(id, this.userId(req));
+  getOne(@Param('id') id: string, @CurrentUser() userId?: string) {
+    return this.clubs.getOne(id, userId);
   }
 
   @Post()
   create(
     @Body(new ZodValidationPipe(createClubSchema)) body: CreateClubDto,
-    @Req() req: Request,
+    @CurrentUser() userId: string,
   ) {
-    return this.clubs.create(this.requireUser(req), body);
+    return this.clubs.create(userId, body);
   }
 
   @Delete(':id')
   @HttpCode(200)
-  remove(@Param('id') id: string, @Req() req: Request) {
-    return this.clubs.remove(id, this.requireUser(req));
+  remove(@Param('id') id: string, @CurrentUser() userId: string) {
+    return this.clubs.remove(id, userId);
   }
 
   @Post(':id/apply')
   @HttpCode(200)
-  apply(@Param('id') clubId: string, @Req() req: Request) {
-    return this.clubs.apply(clubId, this.requireUser(req));
+  apply(@Param('id') clubId: string, @CurrentUser() userId: string) {
+    return this.clubs.apply(clubId, userId);
   }
 
   @Get(':id/applicants')
-  getApplicants(@Param('id') clubId: string, @Req() req: Request) {
-    return this.clubs.getApplicants(clubId, this.requireUser(req));
+  getApplicants(@Param('id') clubId: string, @CurrentUser() userId: string) {
+    return this.clubs.getApplicants(clubId, userId);
   }
 
   @Patch(':id/applicants/:userId/accept')
@@ -59,13 +60,9 @@ export class ClubsController {
   accept(
     @Param('id') clubId: string,
     @Param('userId') applicantId: string,
-    @Req() req: Request,
+    @CurrentUser() hostId: string,
   ) {
-    return this.clubs.acceptApplicant(
-      clubId,
-      applicantId,
-      this.requireUser(req),
-    );
+    return this.clubs.acceptApplicant(clubId, applicantId, hostId);
   }
 
   @Patch(':id/applicants/:userId/reject')
@@ -73,22 +70,8 @@ export class ClubsController {
   reject(
     @Param('id') clubId: string,
     @Param('userId') applicantId: string,
-    @Req() req: Request,
+    @CurrentUser() hostId: string,
   ) {
-    return this.clubs.rejectApplicant(
-      clubId,
-      applicantId,
-      this.requireUser(req),
-    );
-  }
-
-  private userId(req: Request): string | undefined {
-    return req.userId;
-  }
-
-  private requireUser(req: Request): string {
-    const id = this.userId(req);
-    if (!id) throw new UnauthorizedException();
-    return id;
+    return this.clubs.rejectApplicant(clubId, applicantId, hostId);
   }
 }
