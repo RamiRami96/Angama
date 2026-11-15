@@ -62,13 +62,14 @@
 ```
 Angama/
 ├── client/                  # Expo / React Native app
-│   └── src/
-│       ├── app/              # expo-router routes (screens)
-│       ├── pages/             # Top-level page components
-│       ├── modules/           # Feature modules (sign-in, sign-up, clubs,
-│       │                        club-detail, create-club, settings, start)
-│       └── shared/            # Cross-feature models, API services,
-│                                TanStack Query hooks, shared UI components
+│   ├── app/                   # expo-router routes: thin re-exports of _pages
+│   └── src/                   # Feature-Sliced Design layers (top to bottom)
+│       ├── _app/              # App-wide setup: providers, root layout wiring
+│       ├── _pages/            # One slice per screen, composes widgets/features
+│       ├── widgets/           # Large self-contained UI blocks
+│       ├── features/          # User actions (sign-in, sign-up, create/delete club, apply, ...)
+│       ├── entities/          # Business entities (models, API, queries, UI)
+│       └── shared/            # Reusable UI kit (ui), API client (api), helpers/constants (lib)
 │
 └── server/                  # NestJS API
     ├── prisma/                # Prisma schema (User, Club, Registration)
@@ -80,6 +81,8 @@ Angama/
         ├── prisma/               # Prisma service/module
         └── shared/                # Shared utils/types
 ```
+
+**Client architecture** follows [Feature-Sliced Design](https://feature-sliced.design/). A layer may import only from layers below it (`_app` > `_pages` > `widgets` > `features` > `entities` > `shared`), and slices in the same layer never import each other. Every slice exposes its public API through an `index.ts`; import from the slice root (e.g. `@/features/sign-in`), never from its internals. `_app` and `_pages` are underscore-prefixed so they don't clash with expo-router's `app` folder.
 
 **Data model** (Prisma): `User` hosts many `Club`s and creates many `Registration`s; a `Registration` links a `User` to a `Club` with a role (`SPEAKER` / `LISTENER`) and a status.
 
