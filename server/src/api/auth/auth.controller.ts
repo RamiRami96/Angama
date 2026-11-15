@@ -8,14 +8,19 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import * as signature from 'cookie-signature';
 import { AuthService } from './auth.service';
+import { AuthGuard } from './guards/auth.guard';
+import { TokenService } from './token.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private tokens: TokenService,
+  ) {}
 
   @Post('sign-up')
   async signUp(
@@ -26,57 +31,67 @@ export class AuthController {
       password: string;
       dateOfBirth: string;
     },
-    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ) {
     const user = await this.auth.signUp(body);
-    req.session.userId = user.id;
-    return { ...user, _sid: this.signSession(req) };
+    return this.startSession(user, res);
   }
 
   @Post('sign-in')
   @HttpCode(200)
   async signIn(
     @Body() body: { email: string; password: string },
-    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ) {
     const user = await this.auth.signIn(body.email, body.password);
-    req.session.userId = user.id;
-    return { ...user, _sid: this.signSession(req) };
+    return this.startSession(user, res);
+  }
+
+  @Post('refresh')
+  @HttpCode(200)
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const accessToken = await this.tokens.rotate(req, res);
+    return { accessToken };
   }
 
   @Post('sign-out')
   @HttpCode(200)
-  signOut(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    req.session.destroy(() => {});
-    res.clearCookie('connect.sid');
+  async signOut(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.tokens.revoke(req, res);
     return { ok: true };
   }
 
   @Get('me')
+  @UseGuards(AuthGuard)
   async me(@Req() req: Request) {
-    const userId = req.session.userId;
-    if (!userId) throw new UnauthorizedException();
-    const user = await this.auth.findById(userId);
+    const user = await this.auth.findById(req.userId!);
     if (!user) throw new UnauthorizedException();
     return user;
   }
 
   @Delete('account')
+  @UseGuards(AuthGuard)
   @HttpCode(200)
   async deleteAccount(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const userId = req.session.userId;
-    if (!userId) throw new UnauthorizedException();
-    await this.auth.deleteAccount(userId);
-    req.session.destroy(() => {});
-    res.clearCookie('connect.sid');
+    await this.auth.deleteAccount(req.userId!);
+    this.tokens.clearCookie(res);
     return { ok: true };
   }
 
-  private signSession(req: Request): string {
-    const secret = process.env.SESSION_SECRET ?? 'angama-secret';
-    return 's:' + signature.sign(req.sessionID, secret);
+  private async startSession(
+    user: Awaited<ReturnType<AuthService['signIn']>>,
+    res: Response,
+  ) {
+    await this.tokens.issueRefreshToken(user.id, res);
+    return { user, accessToken: this.tokens.signAccessToken(user.id) };
   }
 }

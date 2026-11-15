@@ -10,7 +10,7 @@ import { Request } from 'express';
 export class AuthGuard implements CanActivate {
   canActivate(ctx: ExecutionContext): boolean {
     const req = ctx.switchToHttp().getRequest<Request>();
-    if (!req.session.userId) throw new UnauthorizedException();
+    if (!req.userId) throw new UnauthorizedException();
     return true;
   }
 }

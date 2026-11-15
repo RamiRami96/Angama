@@ -1,4 +1,4 @@
-import { clearSid, request } from "@/shared/api";
+import { clearAccessToken, request } from "@/shared/api";
 
 import { User } from "../model/user.model";
 
@@ -7,7 +7,7 @@ export const userService = {
     try {
       return await request<User>("/auth/me");
     } catch {
-      await clearSid();
+      await clearAccessToken();
       return null;
     }
   },
