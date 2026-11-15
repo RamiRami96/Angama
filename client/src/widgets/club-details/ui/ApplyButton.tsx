@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 import type { Club } from "@/entities/club";
 import { GradientButton } from "@/shared/ui";
 
-import { useClubStatus } from "../model/useClubStatus";
+import { getClubStatus } from "../model/club-status";
 
 type Props = {
   club: Club;
@@ -11,7 +11,7 @@ type Props = {
 };
 
 export function ApplyButton({ club, onPress }: Props) {
-  const { canApply, applyLabel } = useClubStatus(club);
+  const { canApply, applyLabel } = getClubStatus(club);
 
   return (
     <View style={{ paddingTop: 4 }}>

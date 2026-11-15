@@ -3,12 +3,11 @@ import { useCurrentUser } from "@/entities/user";
 
 import { useClubApply } from "./useClubApply";
 import { useClubDelete } from "./useClubDelete";
-import { useClubUserRelation } from "./useClubUserRelation";
 
 export function useClubDetail(club: Club) {
   const currentUser = useCurrentUser();
-  const { isHost, alreadyApplied } = useClubUserRelation(club, currentUser);
-  const apply = useClubApply(club, alreadyApplied);
+  const isHost = currentUser?.id === club.host.id;
+  const apply = useClubApply(club, club.isRegistered);
   const remove = useClubDelete(club);
 
   return { isHost, apply, remove };

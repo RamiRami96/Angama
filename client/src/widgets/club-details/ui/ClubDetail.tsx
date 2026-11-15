@@ -1,4 +1,3 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -8,7 +7,7 @@ import {
   ApplySuccessModal,
 } from "@/features/apply-to-club";
 import { DeleteClubModal } from "@/features/delete-club";
-import { brandGradient } from "@/shared/config";
+import { BrandGradient } from "@/shared/ui";
 
 import { useClubDetail } from "../model/useClubDetail";
 
@@ -27,12 +26,7 @@ export function ClubDetail({ club, onBack }: Props) {
   const { isHost, apply, remove } = useClubDetail(club);
 
   return (
-    <LinearGradient
-      colors={brandGradient}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ flex: 1 }}
-    >
+    <BrandGradient style={{ flex: 1 }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -67,6 +61,6 @@ export function ClubDetail({ club, onBack }: Props) {
         clubName={club.name}
         onClose={apply.onWarnClose}
       />
-    </LinearGradient>
+    </BrandGradient>
   );
 }

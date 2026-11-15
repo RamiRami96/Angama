@@ -3,7 +3,7 @@ import { Pressable, Text, View } from "react-native";
 
 import type { Club } from "@/entities/club";
 
-import { useClubStatus } from "../model/useClubStatus";
+import { getClubStatus } from "../model/club-status";
 
 type Props = {
   club: Club;
@@ -11,7 +11,7 @@ type Props = {
 };
 
 export function ClubHeader({ club, onBack }: Props) {
-  const { status } = useClubStatus(club);
+  const { status } = getClubStatus(club);
 
   return (
     <>

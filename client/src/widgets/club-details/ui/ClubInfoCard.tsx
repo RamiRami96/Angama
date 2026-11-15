@@ -4,14 +4,14 @@ import { Text, View } from "react-native";
 import type { Club } from "@/entities/club";
 import { formatDate, formatTime } from "@/shared/lib";
 
-import { useClubMembers } from "../model/useClubMembers";
+import { getClubMembers } from "../model/club-members";
 
 type Props = {
   club: Club;
 };
 
 export function ClubInfoCard({ club }: Props) {
-  const { membersRatio, spotsLeft } = useClubMembers(club);
+  const { membersRatio, spotsLeft } = getClubMembers(club);
 
   return (
     <View className="bg-black/30 rounded-3xl p-4 gap-4">

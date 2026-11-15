@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useCreateClubMutation } from "../model/useCreateClubMutation";
 
@@ -9,7 +8,6 @@ import { CreateClub } from "./CreateClub";
 
 export function CreateClubContainer() {
   const router = useRouter();
-  const { top, bottom } = useSafeAreaInsets();
   const createClubMutation = useCreateClubMutation();
   const { fields, errors, handleChange, validate } = useCreateClubForm();
 
@@ -28,8 +26,6 @@ export function CreateClubContainer() {
       onChange={handleChange}
       onSubmit={handleSubmit}
       onBack={() => router.back()}
-      top={top}
-      bottom={bottom}
     />
   );
 }

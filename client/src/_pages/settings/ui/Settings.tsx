@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Application } from "@/entities/application";
 import { User } from "@/entities/user";
@@ -20,7 +21,6 @@ export type SettingsProps = {
   onRefreshApplications: () => void;
   onSignOut: () => void;
   onDeleteAccount: () => void;
-  top: number;
 };
 
 export function Settings({
@@ -35,8 +35,8 @@ export function Settings({
   onRefreshApplications,
   onSignOut,
   onDeleteAccount,
-  top,
 }: SettingsProps) {
+  const { top } = useSafeAreaInsets();
 
   return (
     <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
