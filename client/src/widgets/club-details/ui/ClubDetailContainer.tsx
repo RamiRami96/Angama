@@ -6,11 +6,11 @@ import { useCurrentUser } from "@/entities/user";
 import { useApplyToClubMutation } from "@/features/apply-to-club";
 import { useDeleteClubMutation } from "@/features/delete-club";
 
-import { ClubDetail } from "../ClubDetail";
-import { useClubDetailModals } from "../hooks/useClubDetailModals";
-import { useClubMembers } from "../hooks/useClubMembers";
-import { useClubStatus } from "../hooks/useClubStatus";
-import { useClubUserRelation } from "../hooks/useClubUserRelation";
+import { ClubDetail } from "./ClubDetail";
+import { useClubDetailModals } from "../model/useClubDetailModals";
+import { useClubMembers } from "../model/useClubMembers";
+import { useClubStatus } from "../model/useClubStatus";
+import { useClubUserRelation } from "../model/useClubUserRelation";
 
 type Props = {
   id: string;

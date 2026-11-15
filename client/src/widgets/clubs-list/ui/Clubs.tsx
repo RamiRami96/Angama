@@ -3,7 +3,7 @@ import { FlatList, RefreshControl, Text, View } from "react-native";
 import { GradientButton } from "@/shared/ui";
 import { Club, ClubCard } from "@/entities/club";
 
-import { SearchBar } from "./components/SearchBar";
+import { SearchBar } from "./SearchBar";
 
 export type ClubsProps = {
   clubs: Club[];

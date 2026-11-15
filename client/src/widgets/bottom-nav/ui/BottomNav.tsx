@@ -3,7 +3,7 @@ import { GlassView } from "expo-glass-effect";
 import { Pressable, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Route, TABS } from "@/shared/models/navigation.model";
+import { Route, TABS } from "../model/navigation";
 
 type BottomNavProps = {
   state: { routes: Route[]; index: number };

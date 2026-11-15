@@ -1,4 +1,4 @@
-import { ClubsList } from "@/modules/clubs/components/ClubsList";
+import { ClubsList } from "@/widgets/clubs-list";
 
 export function ClubsPage() {
   return <ClubsList />;

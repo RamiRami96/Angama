@@ -4,9 +4,9 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { Application } from "@/entities/application";
 import { User } from "@/entities/user";
 
-import { AccountInfo } from "./components/AccountInfo";
-import { ApplicantsList } from "./components/ApplicantsList";
-import { UserApplicationsList } from "./components/UserApplicationsList";
+import { AccountInfo } from "@/widgets/account-info";
+import { ApplicantsList } from "@/widgets/applicants-list";
+import { UserApplicationsList } from "@/widgets/my-applications";
 
 export type SettingsProps = {
   user: User | null;

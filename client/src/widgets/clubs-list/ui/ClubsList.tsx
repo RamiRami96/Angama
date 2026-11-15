@@ -3,8 +3,8 @@ import { useMemo, useState } from "react";
 import { Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Clubs } from "../Clubs";
-import { useClubs } from "../hooks/useClubs";
+import { Clubs } from "./Clubs";
+import { useClubs } from "../model/useClubs";
 
 export function ClubsList() {
   const router = useRouter();

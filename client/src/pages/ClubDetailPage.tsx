@@ -1,4 +1,4 @@
-import { ClubDetailContainer } from "@/modules/club-detail";
+import { ClubDetailContainer } from "@/widgets/club-details";
 
 type Props = {
   id: string;
