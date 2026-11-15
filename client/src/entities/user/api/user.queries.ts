@@ -10,11 +10,3 @@ export function useCurrentUserQuery() {
     queryFn: userService.getCurrentUser,
   });
 }
-
-export function useHostedClubRefQuery(userId: string | undefined) {
-  return useQuery({
-    queryKey: queryKeys.users.hostedClub,
-    queryFn: userService.getHostedClub,
-    enabled: !!userId,
-  });
-}

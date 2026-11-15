@@ -1,6 +1,6 @@
 import { ApiError, clearAccessToken, requestParsed } from "@/shared/api";
 
-import { hostedClubRefSchema, User, userSchema } from "../model/user.model";
+import { User, userSchema } from "../model/user.model";
 
 export const userService = {
   async getCurrentUser(): Promise<User | null> {
@@ -17,6 +17,4 @@ export const userService = {
     }
   },
 
-  getHostedClub: (): Promise<{ id: string } | null> =>
-    requestParsed("/users/me/hosted-club", hostedClubRefSchema),
 };

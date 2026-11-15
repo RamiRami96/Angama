@@ -1,6 +1,6 @@
-import { Application, useApplicantsQuery, useMyApplicationsQuery } from "@/entities/application";
-import { Club } from "@/entities/club";
-import { User } from "@/entities/user";
+import { useApplicantsQuery, useMyApplicationsQuery } from "@/entities/application";
+import type { Club } from "@/entities/club";
+import type { User } from "@/entities/user";
 import {
   useAcceptApplicantMutation,
   useRejectApplicantMutation,
@@ -11,24 +11,6 @@ export function useApplicants(hostedClub: Club | null, user: User | null) {
   const myApplicationsQuery = useMyApplicationsQuery(!!user);
   const acceptMutation = useAcceptApplicantMutation();
   const rejectMutation = useRejectApplicantMutation();
-
-  const applicants: Application[] = (applicantsQuery.data ?? []).map((a) => ({
-    userId: a.userId,
-    userName: a.user.name,
-    clubId: a.clubId,
-    clubName: hostedClub?.name ?? "",
-    status: a.status,
-  }));
-
-  const userApplications: Application[] = user
-    ? (myApplicationsQuery.data ?? []).map((a) => ({
-        userId: user.id,
-        userName: user.name,
-        clubId: a.clubId,
-        clubName: a.clubName,
-        status: a.status,
-      }))
-    : [];
 
   const handleAccept = (userId: string) => {
     if (hostedClub) acceptMutation.mutate({ clubId: hostedClub.id, userId });
@@ -42,5 +24,11 @@ export function useApplicants(hostedClub: Club | null, user: User | null) {
     await Promise.all([applicantsQuery.refetch(), myApplicationsQuery.refetch()]);
   };
 
-  return { applicants, userApplications, handleAccept, handleReject, handleRefreshApplications };
+  return {
+    applicants: applicantsQuery.data ?? [],
+    userApplications: myApplicationsQuery.data ?? [],
+    handleAccept,
+    handleReject,
+    handleRefreshApplications,
+  };
 }

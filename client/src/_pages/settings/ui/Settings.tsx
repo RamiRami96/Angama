@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Application } from "@/entities/application";
+import type { Applicant, MyApplication } from "@/entities/application";
 import { User } from "@/entities/user";
 
 import { AccountInfo } from "@/widgets/account-info";
@@ -14,8 +14,8 @@ export type SettingsProps = {
   isLoading: boolean;
   isHost: boolean;
   hostedClubName?: string;
-  applicants: Application[];
-  userApplications: Application[];
+  applicants: Applicant[];
+  userApplications: MyApplication[];
   onAccept: (userId: string) => void;
   onReject: (userId: string) => void;
   onRefreshApplications: () => void;

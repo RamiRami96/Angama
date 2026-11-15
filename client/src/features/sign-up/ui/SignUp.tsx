@@ -96,6 +96,10 @@ export function SignUp({
           />
         </View>
 
+        {errors.root?.message && (
+          <Text className="text-red-500 text-sm text-center">{errors.root.message}</Text>
+        )}
+
         <GradientButton label="Get Started" onPress={onSubmit} loading={isSubmitting} />
 
         <View className="flex-row justify-center gap-1">

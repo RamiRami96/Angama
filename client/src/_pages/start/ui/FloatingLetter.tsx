@@ -14,7 +14,7 @@ export function FloatingLetter({ particle, screenHeight }: Props) {
         style,
         {
           position: "absolute",
-          left: `${particle.x * 100}%` as any,
+          left: `${particle.x * 100}%` as `${number}%`,
           top: 0,
           fontSize: particle.size,
           color: "#fff",

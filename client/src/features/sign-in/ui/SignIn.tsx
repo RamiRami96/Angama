@@ -11,7 +11,6 @@ export type SignInProps = {
   isSubmitting: boolean;
   onSubmit: () => void;
   onNavigateSignUp: () => void;
-  onForgotPassword: () => void;
 };
 
 export function SignIn({
@@ -20,7 +19,6 @@ export function SignIn({
   isSubmitting,
   onSubmit,
   onNavigateSignUp,
-  onForgotPassword,
 }: SignInProps) {
   return (
     <ScreenLayout
@@ -67,11 +65,11 @@ export function SignIn({
               />
             )}
           />
-
-          <Pressable onPress={onForgotPassword} className="self-end">
-            <Text className="text-primary text-sm font-medium">Forgot password?</Text>
-          </Pressable>
         </View>
+
+        {errors.root?.message && (
+          <Text className="text-red-500 text-sm text-center">{errors.root.message}</Text>
+        )}
 
         <GradientButton label="Log In" onPress={onSubmit} loading={isSubmitting} />
 

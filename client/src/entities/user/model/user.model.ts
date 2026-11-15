@@ -17,9 +17,4 @@ export const authResponseSchema = z.object({
   accessToken: z.string(),
 });
 
-export const hostedClubRefSchema = z
-  .object({ id: z.string() })
-  .nullish()
-  .transform((v) => v ?? null);
-
 export type User = z.infer<typeof userSchema>;

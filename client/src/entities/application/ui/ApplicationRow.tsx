@@ -1,14 +1,14 @@
 import { Text, View } from "react-native";
 
-import { Application } from "../model/application.model";
-import { STATUS_STYLE } from "../model/status-style";
+import type { MyApplication } from "../model/application.model";
+import { APPLICATION_STATUS_STYLE } from "../model/application-status-style";
 
 type Props = {
-  app: Application;
+  app: MyApplication;
 };
 
 export function ApplicationRow({ app }: Props) {
-  const s = STATUS_STYLE[app.status];
+  const s = APPLICATION_STATUS_STYLE[app.status];
   return (
     <View className="flex-row items-center py-3 border-b border-white/10">
       <Text className="text-white text-sm font-medium flex-1">{app.clubName}</Text>

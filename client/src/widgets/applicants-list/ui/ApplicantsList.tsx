@@ -1,11 +1,11 @@
 import { Text, View } from "react-native";
 
-import { Application } from "@/entities/application";
+import type { Applicant } from "@/entities/application";
 
 import { ApplicantRow } from "@/features/manage-applicants";
 
 type Props = {
-  applicants: Application[];
+  applicants: Applicant[];
   hostedClubName?: string;
   onAccept: (userId: string) => void;
   onReject: (userId: string) => void;
@@ -25,7 +25,7 @@ export function ApplicantsList({ applicants, hostedClubName, onAccept, onReject 
         applicants.map((a) => (
           <ApplicantRow
             key={a.userId}
-            name={a.userName}
+            name={a.user.name}
             onAccept={() => onAccept(a.userId)}
             onReject={() => onReject(a.userId)}
           />

@@ -2,6 +2,8 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { router } from "expo-router";
 import { useForm } from "react-hook-form";
 
+import { toFormErrors } from "@/shared/lib";
+
 import { useSignInMutation } from "../model/useSignInMutation";
 
 import { SignInFormData, signInSchema } from "../model/sign-in.schema";
@@ -27,8 +29,11 @@ export function SignInForm() {
       await signInMutation.mutateAsync(data);
       router.replace("/clubs");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Something went wrong";
-      setError("email", { message });
+      const { fields, root } = toFormErrors(err, ["email", "password"] as const);
+      for (const [name, message] of Object.entries(fields)) {
+        setError(name as keyof SignInFormData, { message });
+      }
+      if (root) setError("root", { message: root });
     }
   };
 
@@ -39,7 +44,6 @@ export function SignInForm() {
       isSubmitting={isSubmitting}
       onSubmit={handleSubmit(onSubmit)}
       onNavigateSignUp={() => router.push("/sign-up")}
-      onForgotPassword={() => {}}
     />
   );
 }
