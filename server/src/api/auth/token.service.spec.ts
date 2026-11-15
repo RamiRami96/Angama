@@ -119,6 +119,30 @@ describe('TokenService refresh tokens', () => {
     expect(clearCookie).toHaveBeenCalled();
   });
 
+  it('revoke deletes only the presented token and clears the cookie', async () => {
+    const { service, db, res, cookie, clearCookie } = setup();
+    const token = await issuedToken(service, res, cookie);
+    db.refreshToken.deleteMany.mockClear();
+
+    await service.revoke(reqWithCookie(token), res);
+
+    expect(db.refreshToken.deleteMany).toHaveBeenCalledTimes(1);
+    expect(db.refreshToken.deleteMany).toHaveBeenCalledWith({
+      where: { tokenHash: expect.any(String) as string },
+    });
+    expect(clearCookie).toHaveBeenCalled();
+  });
+
+  it('revoke without a cookie still clears it and touches no data', async () => {
+    const { service, db, res, clearCookie } = setup();
+    db.refreshToken.deleteMany.mockClear();
+
+    await service.revoke(reqWithCookie(), res);
+
+    expect(db.refreshToken.deleteMany).not.toHaveBeenCalled();
+    expect(clearCookie).toHaveBeenCalled();
+  });
+
   it('rejects a missing or forged cookie', async () => {
     const { service, res } = setup();
     await expect(service.rotate(reqWithCookie(), res)).rejects.toBeInstanceOf(

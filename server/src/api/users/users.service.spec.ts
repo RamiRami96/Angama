@@ -47,3 +47,48 @@ describe('UsersService.updateProfile', () => {
     });
   });
 });
+
+describe('UsersService.getMyApplications', () => {
+  it("returns only the caller's registrations, newest first, with ISO dates", async () => {
+    const findMany = jest.fn().mockResolvedValue([
+      {
+        clubId: 'c1',
+        status: 'PENDING',
+        registeredAt: new Date('2024-05-01T10:00:00Z'),
+        club: {
+          id: 'c1',
+          name: 'Chess',
+          startDate: new Date('2024-06-01T18:00:00Z'),
+          location: 'Cafe',
+        },
+      },
+    ]);
+    const service = new UsersService({
+      registration: { findMany },
+    } as unknown as PrismaService);
+
+    const result = await service.getMyApplications('u1');
+
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: 'u1' },
+        orderBy: { registeredAt: 'desc' },
+      }),
+    );
+    expect(result).toEqual([
+      {
+        userId: 'u1',
+        clubId: 'c1',
+        clubName: 'Chess',
+        status: expect.any(String) as string,
+        registeredAt: '2024-05-01T10:00:00.000Z',
+        club: {
+          id: 'c1',
+          name: 'Chess',
+          startDate: '2024-06-01T18:00:00.000Z',
+          location: 'Cafe',
+        },
+      },
+    ]);
+  });
+});
