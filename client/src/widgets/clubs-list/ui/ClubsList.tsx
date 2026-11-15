@@ -1,27 +1,17 @@
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
 import { Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Clubs } from "./Clubs";
 import { useClubs } from "../model/useClubs";
+import { useClubSearch } from "../model/useClubSearch";
 
 export function ClubsList() {
   const router = useRouter();
   const { top, bottom } = useSafeAreaInsets();
-  const [searchQuery, setSearchQuery] = useState("");
   const { clubs, isRefetching, refetch } = useClubs();
 
-  const filteredClubs = useMemo(() => {
-    if (!searchQuery.trim()) return clubs;
-    const q = searchQuery.toLowerCase();
-    return clubs.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.description.toLowerCase().includes(q) ||
-        c.location.toLowerCase().includes(q)
-    );
-  }, [searchQuery, clubs]);
+  const { searchQuery, setSearchQuery, filteredClubs } = useClubSearch(clubs);
 
   const handleCreateClub = () => router.push("/clubs/create");
 

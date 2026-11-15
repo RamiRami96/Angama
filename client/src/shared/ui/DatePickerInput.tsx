@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+
+import { useVisibility } from "@/shared/lib";
 
 type Props = {
   value: string;
@@ -20,7 +21,7 @@ export function DatePickerInput({
   maximumDate,
   minimumDate,
 }: Props) {
-  const [visible, setVisible] = useState(false);
+  const { visible, show, hide } = useVisibility();
 
   const dateValue = value ? new Date(value) : undefined;
   const displayText = dateValue
@@ -28,7 +29,7 @@ export function DatePickerInput({
     : null;
 
   const handleConfirm = (date: Date) => {
-    setVisible(false);
+    hide();
     const pad = (n: number) => String(n).padStart(2, "0");
     onChange(`${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`);
   };
@@ -36,7 +37,7 @@ export function DatePickerInput({
   return (
     <View className="gap-1">
       <Pressable
-        onPress={() => setVisible(true)}
+        onPress={show}
         className={`flex-row items-center bg-gray-100 rounded-2xl px-4 h-14 active:opacity-70 ${
           error ? "border border-red-400" : ""
         }`}
@@ -51,7 +52,7 @@ export function DatePickerInput({
         isVisible={visible}
         mode="date"
         onConfirm={handleConfirm}
-        onCancel={() => setVisible(false)}
+        onCancel={hide}
         date={dateValue ?? new Date()}
         maximumDate={maximumDate}
         minimumDate={minimumDate}
