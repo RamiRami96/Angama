@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, Text, View } from "react-native";
-
 import { GradientButton } from "@/shared/ui";
+import { colors } from "@/shared/config";
 
 type Props = {
   visible: boolean;
@@ -18,7 +18,7 @@ export function ApplySuccessModal({ visible, clubName, onConfirm }: Props) {
         <View className="bg-black/60 rounded-3xl p-6 w-full gap-5" style={{ borderWidth: 1, borderColor: "rgba(255,255,255,0.12)" }}>
           <View className="items-center gap-4">
             <View className="w-16 h-16 rounded-full bg-white/10 items-center justify-center">
-              <Ionicons name="checkmark-circle" size={40} color="#06B6D4" />
+              <Ionicons name="checkmark-circle" size={40} color={colors.secondary} />
             </View>
             <View className="items-center gap-1.5">
               <Text className="text-white font-bold text-xl text-center">

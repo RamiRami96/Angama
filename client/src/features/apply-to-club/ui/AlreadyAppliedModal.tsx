@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, Pressable, Text, View } from "react-native";
+import { colors } from "@/shared/config";
 
 type Props = {
   visible: boolean;
@@ -16,7 +17,7 @@ export function AlreadyAppliedModal({ visible, clubName, onClose }: Props) {
         <View className="bg-black/60 rounded-3xl p-6 w-full gap-5" style={{ borderWidth: 1, borderColor: "rgba(255,255,255,0.12)" }}>
           <View className="items-center gap-4">
             <View className="w-16 h-16 rounded-full bg-amber-500/20 items-center justify-center">
-              <Ionicons name="warning" size={40} color="#F59E0B" />
+              <Ionicons name="warning" size={40} color={colors.accent} />
             </View>
             <View className="items-center gap-1.5">
               <Text className="text-white font-bold text-xl text-center">
