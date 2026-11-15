@@ -1,36 +1,14 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import Constants from "expo-constants";
 import { z } from "zod";
 
 import { ApiError, type ApiFieldError } from "./api-error";
-
-const debuggerHost = Constants.expoConfig?.hostUri?.split(":")[0];
-export const API = `http://${debuggerHost ?? "localhost"}:3000`;
-const ACCESS_TOKEN_KEY = "access_token";
+import { API } from "./config";
+import { clearAccessToken, getAccessToken, setAccessToken } from "./token-storage";
 
 const NO_REFRESH_PATHS = ["/auth/sign-in", "/auth/sign-up", "/auth/refresh", "/auth/sign-out"];
 
 const refreshResponseSchema = z.object({ accessToken: z.string() });
 
-let accessTokenCache: string | null | undefined;
 let refreshing: Promise<string | null> | null = null;
-
-export async function getAccessToken(): Promise<string | null> {
-  if (accessTokenCache === undefined) {
-    accessTokenCache = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
-  }
-  return accessTokenCache;
-}
-
-export async function setAccessToken(token: string): Promise<void> {
-  accessTokenCache = token;
-  await AsyncStorage.setItem(ACCESS_TOKEN_KEY, token);
-}
-
-export async function clearAccessToken(): Promise<void> {
-  accessTokenCache = null;
-  await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
-}
 
 function refreshAccessToken(): Promise<string | null> {
   refreshing ??= (async () => {
