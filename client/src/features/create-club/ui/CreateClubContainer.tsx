@@ -1,22 +1,17 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useCreateClubMutation } from "../model/useCreateClubMutation";
 
+import { useCreateClubForm } from "../model/useCreateClubForm";
+
 import { CreateClub } from "./CreateClub";
-import { EMPTY_CLUB_FIELDS } from "../config/create-club.const";
-import { CreateClubFields } from "../model/create-club.model";
 
 export function CreateClubContainer() {
   const router = useRouter();
   const { top, bottom } = useSafeAreaInsets();
   const createClubMutation = useCreateClubMutation();
-  const [fields, setFields] = useState<CreateClubFields>(EMPTY_CLUB_FIELDS);
-
-  const handleChange = (key: keyof CreateClubFields, value: string) => {
-    setFields((prev) => ({ ...prev, [key]: value }));
-  };
+  const { fields, handleChange } = useCreateClubForm();
 
   const handleSubmit = async () => {
     await createClubMutation.mutateAsync({

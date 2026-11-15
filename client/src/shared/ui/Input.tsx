@@ -1,5 +1,6 @@
-import { useState } from "react";
 import { Pressable, Text, TextInput, TextInputProps, View } from "react-native";
+
+import { usePasswordVisibility } from "@/shared/lib";
 
 type Props = TextInputProps & {
   error?: string;
@@ -7,7 +8,7 @@ type Props = TextInputProps & {
 };
 
 export function Input({ error, isPassword, secureTextEntry, style, ...props }: Props) {
-  const [hidden, setHidden] = useState(secureTextEntry ?? false);
+  const { hidden, toggleHidden } = usePasswordVisibility(secureTextEntry);
 
   return (
     <View className="gap-1">
@@ -23,7 +24,7 @@ export function Input({ error, isPassword, secureTextEntry, style, ...props }: P
           {...props}
         />
         {isPassword && (
-          <Pressable onPress={() => setHidden((h) => !h)} className="pl-2">
+          <Pressable onPress={toggleHidden} className="pl-2">
             <Text className="text-gray-400 text-sm">{hidden ? "Show" : "Hide"}</Text>
           </Pressable>
         )}
