@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Copies the request-schema contracts in ./src into the server and the client.
 //   node contracts/sync.mjs          write the copies
-//   node contracts/sync.mjs --check  exit 1 if any copy has drifted (for CI)
+//   node contracts/sync.mjs --check  exit 1 if any copy has drifted (run by the server tests)
 import {
   mkdirSync,
   readdirSync,
