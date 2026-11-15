@@ -178,3 +178,39 @@ describe('RegistrationsService applicant decisions', () => {
     });
   });
 });
+
+describe('RegistrationsService.getApplicants', () => {
+  it('lists only pending applicants with a public user and mapped status', async () => {
+    const { service, db } = setup();
+    const findMany = jest.fn().mockResolvedValue([
+      {
+        userId: 'u1',
+        clubId: 'c1',
+        status: 'PENDING',
+        user: { id: 'u1', name: 'Ann', avatarUrl: null },
+      },
+    ]);
+    (db.registration as Record<string, unknown>).findMany = findMany;
+
+    const result = await service.getApplicants('c1', 'host');
+
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { clubId: 'c1', status: 'PENDING' } }),
+    );
+    expect(result).toEqual([
+      {
+        userId: 'u1',
+        clubId: 'c1',
+        user: { id: 'u1', name: 'Ann', avatarUrl: null },
+        status: expect.any(String) as string,
+      },
+    ]);
+  });
+
+  it('forbids non-hosts from reading applicants', async () => {
+    const { service } = setup();
+    await expect(service.getApplicants('c1', 'stranger')).rejects.toMatchObject(
+      { status: 403 },
+    );
+  });
+});
