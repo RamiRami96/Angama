@@ -2,15 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { mapRegistrationStatus } from '../../shared/util/registration-status.util';
 import { toHttpException } from '../../shared/util/http-exception.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { UpdateProfileDto } from './users.schemas';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async updateProfile(
-    userId: string,
-    data: { name?: string; avatarUrl?: string },
-  ) {
+  async updateProfile(userId: string, data: UpdateProfileDto) {
     try {
       const user = await this.prisma.user.update({
         where: { id: userId },

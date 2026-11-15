@@ -1,11 +1,11 @@
-import { clearAccessToken, request } from "@/shared/api";
+import { clearAccessToken, requestParsed } from "@/shared/api";
 
-import { User } from "../model/user.model";
+import { hostedClubRefSchema, User, userSchema } from "../model/user.model";
 
 export const userService = {
   async getCurrentUser(): Promise<User | null> {
     try {
-      return await request<User>("/auth/me");
+      return await requestParsed("/auth/me", userSchema);
     } catch {
       await clearAccessToken();
       return null;
@@ -13,5 +13,5 @@ export const userService = {
   },
 
   getHostedClub: (): Promise<{ id: string } | null> =>
-    request("/users/me/hosted-club"),
+    requestParsed("/users/me/hosted-club", hostedClubRefSchema),
 };

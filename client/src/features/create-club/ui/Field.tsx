@@ -7,9 +7,10 @@ type Props = {
   placeholder?: string;
   multiline?: boolean;
   keyboardType?: "default" | "numeric";
+  error?: string;
 };
 
-export function Field({ label, value, onChange, placeholder, multiline, keyboardType }: Props) {
+export function Field({ label, value, onChange, placeholder, multiline, keyboardType, error }: Props) {
   return (
     <View style={{ gap: 6 }}>
       <Text className="text-white/70 text-xs font-semibold uppercase tracking-widest">{label}</Text>
@@ -28,6 +29,7 @@ export function Field({ label, value, onChange, placeholder, multiline, keyboard
           style={{ paddingVertical: 12, textAlignVertical: multiline ? "top" : "center" }}
         />
       </View>
+      {error && <Text className="text-red-300 text-xs ml-1">{error}</Text>}
     </View>
   );
 }

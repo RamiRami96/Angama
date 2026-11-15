@@ -1,24 +1,16 @@
-import { request } from "@/shared/api";
+import { requestParsed } from "@/shared/api";
 
-export type Applicant = {
-  userId: string;
-  user: { id: string; name: string; avatarUrl?: string };
-  clubId: string;
-  status: "waiting" | "approved" | "rejected" | "cancelled";
-};
-
-export type MyApplication = {
-  clubId: string;
-  clubName: string;
-  status: "waiting" | "approved" | "rejected" | "cancelled";
-  registeredAt: string;
-  club: { id: string; name: string; startDate: string; location: string };
-};
+import {
+  Applicant,
+  MyApplication,
+  applicantSchema,
+  myApplicationSchema,
+} from "../model/application.model";
 
 export const applicationsService = {
   getApplicants: (clubId: string): Promise<Applicant[]> =>
-    request(`/clubs/${clubId}/applicants`),
+    requestParsed(`/clubs/${clubId}/applicants`, applicantSchema.array()),
 
   getMyApplications: (): Promise<MyApplication[]> =>
-    request("/users/me/applications"),
+    requestParsed("/users/me/applications", myApplicationSchema.array()),
 };

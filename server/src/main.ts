@@ -3,18 +3,17 @@ import cookieParser from 'cookie-parser';
 import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 import { TokenService } from './api/auth/token.service';
+import { parseEnv } from './config/env';
 
 async function bootstrap() {
-  for (const name of ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET']) {
-    if (!process.env[name]) throw new Error(`${name} is not set`);
-  }
+  const env = parseEnv();
 
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
     origin:
-      process.env.NODE_ENV === 'production'
-        ? (process.env.CORS_ORIGINS?.split(',') ?? false)
+      env.NODE_ENV === 'production'
+        ? (env.CORS_ORIGINS?.split(',') ?? false)
         : true,
     credentials: true,
   });
@@ -30,6 +29,6 @@ async function bootstrap() {
     next();
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(env.PORT);
 }
 void bootstrap();

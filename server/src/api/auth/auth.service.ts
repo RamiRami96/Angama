@@ -5,18 +5,14 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { SignUpDto } from './auth.schemas';
 import { toHttpException } from '../../shared/util/http-exception.util';
 
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService) {}
 
-  async signUp(data: {
-    name: string;
-    email: string;
-    password: string;
-    dateOfBirth: string;
-  }) {
+  async signUp(data: SignUpDto) {
     try {
       const existing = await this.prisma.user.findUnique({
         where: { email: data.email },

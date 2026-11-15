@@ -4,13 +4,14 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { brandGradient } from "@/shared/config";
 import { GradientButton } from "@/shared/ui";
-import { CreateClubFields } from "../model/create-club.model";
+import { CreateClubErrors, CreateClubFields } from "../model/create-club.model";
 
 import { DateTimePickerField } from "./DateTimePickerField";
 import { Field } from "./Field";
 
 type Props = {
   fields: CreateClubFields;
+  errors: CreateClubErrors;
   isLoading: boolean;
   onChange: (key: keyof CreateClubFields, value: string) => void;
   onSubmit: () => void;
@@ -19,7 +20,7 @@ type Props = {
   bottom: number;
 };
 
-export function CreateClub({ fields, isLoading, onChange, onSubmit, onBack, top, bottom }: Props) {
+export function CreateClub({ fields, errors, isLoading, onChange, onSubmit, onBack, top, bottom }: Props) {
 
   return (
     <LinearGradient
@@ -54,12 +55,14 @@ export function CreateClub({ fields, isLoading, onChange, onSubmit, onBack, top,
             label="Name"
             value={fields.name}
             onChange={(v) => onChange("name", v)}
+            error={errors.name}
             placeholder="Club name"
           />
           <Field
             label="Description"
             value={fields.description}
             onChange={(v) => onChange("description", v)}
+            error={errors.description}
             placeholder="What is this club about?"
             multiline
           />
@@ -67,6 +70,7 @@ export function CreateClub({ fields, isLoading, onChange, onSubmit, onBack, top,
             label="Location"
             value={fields.location}
             onChange={(v) => onChange("location", v)}
+            error={errors.location}
             placeholder="e.g. Astana, Room 201"
           />
           <DateTimePickerField
@@ -74,10 +78,12 @@ export function CreateClub({ fields, isLoading, onChange, onSubmit, onBack, top,
             value={fields.startDate}
             onChange={(v) => onChange("startDate", v)}
           />
+          {errors.startDate && <Text className="text-red-300 text-xs ml-1">{errors.startDate}</Text>}
           <Field
             label="Max Members"
             value={fields.maxMembers}
             onChange={(v) => onChange("maxMembers", v)}
+            error={errors.maxMembers}
             placeholder="e.g. 20"
             keyboardType="numeric"
           />
