@@ -1,4 +1,4 @@
-import { CreateClubContainer } from "@/modules/create-club";
+import { CreateClubContainer } from "@/features/create-club";
 
 export function CreateClubPage() {
   return <CreateClubContainer />;

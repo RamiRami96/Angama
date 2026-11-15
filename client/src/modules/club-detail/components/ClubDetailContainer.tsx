@@ -3,7 +3,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useClubQuery } from "@/entities/club";
 import { useCurrentUser } from "@/entities/user";
-import { useApplyToClubMutation, useDeleteClubMutation } from "@/shared/queries/clubs.queries";
+import { useApplyToClubMutation } from "@/features/apply-to-club";
+import { useDeleteClubMutation } from "@/features/delete-club";
 
 import { ClubDetail } from "../ClubDetail";
 import { useClubDetailModals } from "../hooks/useClubDetailModals";

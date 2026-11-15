@@ -4,7 +4,7 @@ import { User } from "@/entities/user";
 import {
   useAcceptApplicantMutation,
   useRejectApplicantMutation,
-} from "@/shared/queries/applications.queries";
+} from "@/features/manage-applicants";
 
 export function useApplicants(hostedClub: Club | null, user: User | null) {
   const applicantsQuery = useApplicantsQuery(hostedClub?.id);

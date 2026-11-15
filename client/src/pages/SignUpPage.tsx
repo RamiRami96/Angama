@@ -1,4 +1,4 @@
-import { SignUpForm } from "@/modules/sign-up";
+import { SignUpForm } from "@/features/sign-up";
 
 export function SignUpPage() {
   return <SignUpForm />;

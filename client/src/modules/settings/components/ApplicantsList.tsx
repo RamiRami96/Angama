@@ -2,7 +2,7 @@ import { Text, View } from "react-native";
 
 import { Application } from "@/entities/application";
 
-import { ApplicantRow } from "./ApplicantRow";
+import { ApplicantRow } from "@/features/manage-applicants";
 
 type Props = {
   applicants: Application[];

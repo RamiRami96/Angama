@@ -1,4 +1,4 @@
-import { SignInForm } from "@/modules/sign-in";
+import { SignInForm } from "@/features/sign-in";
 
 export function SignInPage() {
   return <SignInForm />;

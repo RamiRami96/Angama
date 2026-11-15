@@ -7,9 +7,8 @@ import { GradientButton } from "@/shared/ui";
 import { formatDate, formatTime } from "@/shared/lib";
 import type { Club } from "@/entities/club";
 
-import { AlreadyAppliedModal } from "./components/AlreadyAppliedModal";
-import { ApplySuccessModal } from "./components/ApplySuccessModal";
-import { DeleteClubModal } from "./components/DeleteClubModal";
+import { AlreadyAppliedModal, ApplySuccessModal } from "@/features/apply-to-club";
+import { DeleteClubModal } from "@/features/delete-club";
 
 type Props = {
   club: Club;

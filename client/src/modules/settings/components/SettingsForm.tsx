@@ -5,9 +5,9 @@ import { useCurrentUser } from "@/entities/user";
 import { ConfirmModal } from "@/shared/ui";
 
 import { useApplicants } from "../hooks/useApplicants";
-import { useDeleteAccount } from "../hooks/useDeleteAccount";
+import { useDeleteAccount } from "@/features/delete-account";
 import { useHostedClub } from "../hooks/useHostedClub";
-import { useSignOut } from "../hooks/useSignOut";
+import { useSignOut } from "@/features/sign-out";
 import { Settings } from "../Settings";
 
 export function SettingsForm() {
