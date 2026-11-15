@@ -11,7 +11,7 @@ import {
 import { OptionalAuth } from '../auth/decorators/auth-mode.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../shared/pipe/zod-validation.pipe';
-import { createClubSchema, type CreateClubDto } from './clubs.schemas';
+import { createClubSchema, type CreateClubDto } from '../../contracts';
 import { ClubsService } from './clubs.service';
 
 @Controller('clubs')

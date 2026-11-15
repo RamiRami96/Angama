@@ -11,7 +11,7 @@ import {
 } from '../../../generated/prisma/enums';
 import { mapRegistrationStatus } from '../../shared/util/registration-status.util';
 import { PrismaService } from '../../prisma/prisma.service';
-import type { CreateClubDto } from './clubs.schemas';
+import type { CreateClubDto } from '../../contracts';
 
 type ClubRow = Awaited<ReturnType<ClubsService['findRaw']>>[number];
 

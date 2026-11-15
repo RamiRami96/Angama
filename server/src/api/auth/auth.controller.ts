@@ -20,7 +20,7 @@ import {
   signUpSchema,
   type SignInDto,
   type SignUpDto,
-} from './auth.schemas';
+} from '../../contracts';
 import { TokenService } from './token.service';
 
 /** Brute-force / credential-stuffing ceiling for sign-in and sign-up, per IP. */

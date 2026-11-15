@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { mapRegistrationStatus } from '../../shared/util/registration-status.util';
 import { PrismaService } from '../../prisma/prisma.service';
-import type { UpdateProfileDto } from './users.schemas';
+import type { UpdateProfileDto } from '../../contracts';
 
 @Injectable()
 export class UsersService {

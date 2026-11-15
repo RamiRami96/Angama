@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { createClubSchema as apiCreateClubSchema, type CreateClubDto } from "@/shared/contracts";
+
 export type CreateClubFields = {
   name: string;
   description: string;
@@ -8,22 +10,25 @@ export type CreateClubFields = {
   maxMembers: string;
 };
 
-export const createClubSchema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
-  description: z.string().trim(),
-  location: z.string().trim(),
-  startDate: z
-    .string()
-    .min(1, "Pick a start date")
-    .refine((v) => !Number.isNaN(new Date(v).getTime()), "Invalid date")
-    .transform((v) => new Date(v).toISOString()),
-  maxMembers: z
-    .string()
-    .trim()
-    .regex(/^\d+$/, "Enter a whole number")
-    .transform(Number)
-    .pipe(z.number().min(1, "Must be at least 1")),
-});
+const isValidDate = (v: string) => !Number.isNaN(new Date(v).getTime());
 
-export type CreateClubData = z.output<typeof createClubSchema>;
+/**
+ * Form strings -> API payload. Field rules (required name, minimum members,
+ * ...) come from the shared contract; this layer only converts the raw input.
+ */
+export const createClubSchema = z
+  .object({
+    name: z.string(),
+    description: z.string(),
+    location: z.string(),
+    startDate: z
+      .string()
+      .min(1, "Pick a start date")
+      .refine(isValidDate, "Invalid date")
+      .transform((v) => new Date(v).toISOString()),
+    maxMembers: z.string().trim().regex(/^\d+$/, "Enter a whole number").transform(Number),
+  })
+  .pipe(apiCreateClubSchema);
+
+export type CreateClubData = CreateClubDto;
 export type CreateClubErrors = Partial<Record<keyof CreateClubFields, string>>;

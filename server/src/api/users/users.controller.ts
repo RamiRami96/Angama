@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Patch } from '@nestjs/common';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../shared/pipe/zod-validation.pipe';
-import { updateProfileSchema, type UpdateProfileDto } from './users.schemas';
+import { updateProfileSchema, type UpdateProfileDto } from '../../contracts';
 import { UsersService } from './users.service';
 
 @Controller('users')

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
-import type { SignUpDto } from './auth.schemas';
+import type { SignUpDto } from '../../contracts';
 
 const BCRYPT_COST = 10;
 // Valid bcrypt hash (same cost) compared against when the email is unknown, so
