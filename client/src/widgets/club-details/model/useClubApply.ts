@@ -10,29 +10,27 @@ export function useClubApply(club: Club, alreadyApplied: boolean) {
   const [successVisible, setSuccessVisible] = useState(false);
   const [warnVisible, setWarnVisible] = useState(false);
 
-  const handleApply = async () => {
-    await applyMutation.mutateAsync(club.id);
+  // The success modal appears only once the server accepted the application;
+  // failures are reported by the mutation's own onError.
+  const onApplyPress = () => {
+    if (alreadyApplied) {
+      setWarnVisible(true);
+      return;
+    }
+    applyMutation.mutate(club.id, { onSuccess: () => setSuccessVisible(true) });
+  };
+
+  const onConfirm = () => {
+    setSuccessVisible(false);
     router.replace("/(main)/clubs");
   };
 
-  const handleApplyPress = () => {
-    if (alreadyApplied) {
-      setWarnVisible(true);
-    } else {
-      setSuccessVisible(true);
-    }
-  };
-
-  const handleConfirm = () => {
-    setSuccessVisible(false);
-    void handleApply();
-  };
-
   return {
+    isApplying: applyMutation.isPending,
     successVisible,
     warnVisible,
-    onApplyPress: handleApplyPress,
-    onConfirm: handleConfirm,
+    onApplyPress,
+    onConfirm,
     onWarnClose: () => setWarnVisible(false),
   };
 }
