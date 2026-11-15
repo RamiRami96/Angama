@@ -1,7 +1,7 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, Text, View, ViewStyle } from "react-native";
 import Animated, { AnimatedStyle } from "react-native-reanimated";
-import { brandGradient } from "@/shared/config";
+
+import { BrandGradient } from "@/shared/ui";
 
 import { FloatingLetters } from "./FloatingLetters";
 
@@ -18,12 +18,7 @@ export type StartProps = {
 export function Start({ onGetStarted, onSignIn, logoStyle, titleStyle, descStyle, buttonsStyle, fontsLoaded }: StartProps) {
 
   return (
-    <LinearGradient
-      colors={brandGradient}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ flex: 1, alignItems: "center", justifyContent: "space-between", paddingHorizontal: 24, paddingTop: 80, paddingBottom: 48 }}
-    >
+    <BrandGradient style={{ flex: 1, alignItems: "center", justifyContent: "space-between", paddingHorizontal: 24, paddingTop: 80, paddingBottom: 48 }}>
       <FloatingLetters />
       <View className="flex-1 items-center justify-center gap-8">
         <Animated.View style={logoStyle} className="items-center">
@@ -75,6 +70,6 @@ export function Start({ onGetStarted, onSignIn, logoStyle, titleStyle, descStyle
           <Text className="text-white font-semibold text-base">Log In</Text>
         </Pressable>
       </Animated.View>
-    </LinearGradient>
+    </BrandGradient>
   );
 }

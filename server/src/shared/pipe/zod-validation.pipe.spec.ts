@@ -1,7 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
-import { signInSchema, signUpSchema } from '../../api/auth/auth.schemas';
-import { createClubSchema } from '../../api/clubs/clubs.schemas';
-import { updateProfileSchema } from '../../api/users/users.schemas';
+import {
+  createClubSchema,
+  signInSchema,
+  signUpSchema,
+  updateProfileSchema,
+} from '../../contracts';
 import { parseEnv } from '../../config/env';
 import { ZodValidationPipe } from './zod-validation.pipe';
 

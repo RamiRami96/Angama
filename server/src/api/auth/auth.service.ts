@@ -5,66 +5,60 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
-import type { SignUpDto } from './auth.schemas';
-import { toHttpException } from '../../shared/util/http-exception.util';
+import type { SignUpDto } from '../../contracts';
+
+const BCRYPT_COST = 10;
+// Valid bcrypt hash (same cost) compared against when the email is unknown, so
+// sign-in takes the same time whether or not the account exists.
+const TIMING_EQUALISER_HASH =
+  '$2b$10$R8rnl/y3IXCdtC9lZkwIDOodk/tAoviiMlonRcjDTYywrg.E3MIuu';
 
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService) {}
 
   async signUp(data: SignUpDto) {
-    try {
-      const existing = await this.prisma.user.findUnique({
-        where: { email: data.email },
-      });
-      if (existing) throw new ConflictException('Email already registered');
+    const existing = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
+    if (existing) throw new ConflictException('Email already registered');
 
-      const hashed = await bcrypt.hash(data.password, 10);
-      const user = await this.prisma.user.create({
-        data: {
-          name: data.name,
-          email: data.email,
-          password: hashed,
-          dateOfBirth: new Date(data.dateOfBirth),
-        },
-      });
+    const hashed = await bcrypt.hash(data.password, BCRYPT_COST);
+    // A concurrent sign-up with the same email hits the unique index (P2002),
+    // which the global filter maps to 409.
+    const user = await this.prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        password: hashed,
+        dateOfBirth: new Date(data.dateOfBirth),
+      },
+    });
 
-      return this.strip(user);
-    } catch (err) {
-      throw toHttpException(err);
-    }
+    return this.strip(user);
   }
 
   async signIn(email: string, password: string) {
-    try {
-      const user = await this.prisma.user.findUnique({ where: { email } });
-      if (!user) throw new UnauthorizedException('Invalid email or password');
+    const user = await this.prisma.user.findUnique({ where: { email } });
 
-      const valid = await bcrypt.compare(password, user.password);
-      if (!valid) throw new UnauthorizedException('Invalid email or password');
-
-      return this.strip(user);
-    } catch (err) {
-      throw toHttpException(err);
+    const valid = await bcrypt.compare(
+      password,
+      user?.password ?? TIMING_EQUALISER_HASH,
+    );
+    if (!user || !valid) {
+      throw new UnauthorizedException('Invalid email or password');
     }
+
+    return this.strip(user);
   }
 
   async findById(id: string) {
-    try {
-      const user = await this.prisma.user.findUnique({ where: { id } });
-      if (!user) return null;
-      return this.strip(user);
-    } catch (err) {
-      throw toHttpException(err);
-    }
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    return user ? this.strip(user) : null;
   }
 
   async deleteAccount(userId: string) {
-    try {
-      await this.prisma.user.delete({ where: { id: userId } });
-    } catch (err) {
-      throw toHttpException(err);
-    }
+    await this.prisma.user.delete({ where: { id: userId } });
   }
 
   private strip(user: {

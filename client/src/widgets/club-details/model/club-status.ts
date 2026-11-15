@@ -1,16 +1,15 @@
-import { Club, STATUS_STYLES } from "@/entities/club";
+import { STATUS_STYLES, type Club } from "@/entities/club";
 
-const APPLY_LABELS: Record<string, string> = {
+const APPLY_LABELS: Partial<Record<Club["status"], string>> = {
   full: "Club is Full",
   cancelled: "Cancelled",
 };
 
-export function useClubStatus(club: Club) {
-  const status = STATUS_STYLES[club.status];
+export function getClubStatus(club: Club) {
   const canApply = !club.isRegistered && club.status === "active";
   const applyLabel = club.isRegistered
     ? "Already Registered"
     : (APPLY_LABELS[club.status] ?? "Apply to Join");
 
-  return { status, canApply, applyLabel };
+  return { status: STATUS_STYLES[club.status], canApply, applyLabel };
 }

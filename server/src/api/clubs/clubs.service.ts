@@ -1,156 +1,184 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { RegistrationStatus } from '../../../generated/prisma/enums';
+import {
+  ClubStatus,
+  RegistrationRole,
+  RegistrationStatus,
+} from '../../../generated/prisma/enums';
 import { mapRegistrationStatus } from '../../shared/util/registration-status.util';
-import { toHttpException } from '../../shared/util/http-exception.util';
 import { PrismaService } from '../../prisma/prisma.service';
-import type { CreateClubDto } from './clubs.schemas';
+import type { CreateClubDto } from '../../contracts';
 
 type ClubRow = Awaited<ReturnType<ClubsService['findRaw']>>[number];
+
+const CLUB_DURATION_MS = 2 * 60 * 60 * 1000;
 
 @Injectable()
 export class ClubsService {
   constructor(private prisma: PrismaService) {}
 
   async getAll(userId?: string) {
-    try {
-      const rows = await this.findRaw();
-      return rows.map((r) => this.format(r, userId));
-    } catch (err) {
-      throw toHttpException(err);
-    }
+    const rows = await this.findRaw();
+    return rows.map((r) => this.format(r, userId));
   }
 
   async getOne(id: string, userId?: string) {
-    try {
-      const row = await this.findRaw(id);
-      if (!row[0]) throw new NotFoundException('Club not found');
-      return this.format(row[0], userId);
-    } catch (err) {
-      throw toHttpException(err);
-    }
+    const [row] = await this.findRaw(id);
+    if (!row) throw new NotFoundException('Club not found');
+    return this.format(row, userId);
   }
 
   async create(userId: string, data: CreateClubDto) {
-    try {
-      const startDate = new Date(data.startDate);
-      const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
-      const club = await this.prisma.club.create({
-        data: {
-          name: data.name,
-          description: data.description,
-          location: data.location,
-          startDate,
-          endDate,
-          maxMembers: data.maxMembers,
-          hostId: userId,
-        },
-        include: {
-          host: { select: { id: true, name: true, avatarUrl: true } },
-          registrations: true,
-        },
-      });
-      return this.format(club, userId);
-    } catch (err) {
-      throw toHttpException(err);
-    }
+    const startDate = new Date(data.startDate);
+    const endDate = new Date(startDate.getTime() + CLUB_DURATION_MS);
+    const club = await this.prisma.club.create({
+      data: {
+        name: data.name,
+        description: data.description,
+        location: data.location,
+        startDate,
+        endDate,
+        maxMembers: data.maxMembers,
+        hostId: userId,
+      },
+      include: {
+        host: { select: { id: true, name: true, avatarUrl: true } },
+        registrations: true,
+      },
+    });
+    return this.format(club, userId);
   }
 
   async remove(clubId: string, userId: string) {
-    try {
-      const club = await this.prisma.club.findUnique({
-        where: { id: clubId },
-      });
-      if (!club) throw new NotFoundException('Club not found');
-      if (club.hostId !== userId) throw new ForbiddenException();
-      await this.prisma.club.delete({ where: { id: clubId } });
-    } catch (err) {
-      throw toHttpException(err);
-    }
+    await this.assertHost(clubId, userId);
+    await this.prisma.club.delete({ where: { id: clubId } });
   }
 
   async apply(clubId: string, userId: string) {
-    try {
-      const club = await this.prisma.club.findUnique({
-        where: { id: clubId },
-        include: {
-          registrations: { where: { status: RegistrationStatus.APPROVED } },
-        },
-      });
-      if (!club) throw new NotFoundException('Club not found');
+    const club = await this.prisma.club.findUnique({ where: { id: clubId } });
+    if (!club) throw new NotFoundException('Club not found');
 
-      const existing = await this.prisma.registration.findUnique({
-        where: { userId_clubId: { userId, clubId } },
-      });
-      if (existing) return existing;
+    const existing = await this.prisma.registration.findUnique({
+      where: { userId_clubId: { userId, clubId } },
+    });
+    if (existing) return existing;
 
-      return await this.prisma.registration.create({
-        data: {
-          userId,
-          clubId,
-          role: 'LISTENER',
-          status: RegistrationStatus.PENDING,
-        },
-      });
-    } catch (err) {
-      throw toHttpException(err);
+    if (club.status === ClubStatus.CANCELLED) {
+      throw new ConflictException('Club is cancelled');
     }
+    if (club.startDate <= new Date()) {
+      throw new ConflictException('Club has already started');
+    }
+    const approved = await this.countApproved(this.prisma, clubId);
+    if (approved >= club.maxMembers) {
+      throw new ConflictException('Club is full');
+    }
+
+    // upsert keeps a concurrent double-apply idempotent instead of a 409.
+    return this.prisma.registration.upsert({
+      where: { userId_clubId: { userId, clubId } },
+      update: {},
+      create: {
+        userId,
+        clubId,
+        role: RegistrationRole.LISTENER,
+        status: RegistrationStatus.PENDING,
+      },
+    });
   }
 
   async getApplicants(clubId: string, hostId: string) {
-    try {
-      const club = await this.prisma.club.findUnique({
-        where: { id: clubId },
-      });
-      if (!club) throw new NotFoundException('Club not found');
-      if (club.hostId !== hostId) throw new ForbiddenException();
+    await this.assertHost(clubId, hostId);
 
-      const applicants = await this.prisma.registration.findMany({
-        where: { clubId, status: RegistrationStatus.PENDING },
-        include: {
-          user: { select: { id: true, name: true, avatarUrl: true } },
-        },
-      });
-      return applicants.map((a) => ({
-        ...a,
-        status: mapRegistrationStatus(a.status),
-      }));
-    } catch (err) {
-      throw toHttpException(err);
-    }
+    const applicants = await this.prisma.registration.findMany({
+      where: { clubId, status: RegistrationStatus.PENDING },
+      include: {
+        user: { select: { id: true, name: true, avatarUrl: true } },
+      },
+    });
+    return applicants.map((a) => ({
+      ...a,
+      status: mapRegistrationStatus(a.status),
+    }));
   }
 
-  async acceptApplicant(clubId: string, applicantId: string, hostId: string) {
-    try {
-      await this.assertHost(clubId, hostId);
-      return await this.prisma.registration.update({
-        where: { userId_clubId: { userId: applicantId, clubId } },
-        data: { status: RegistrationStatus.APPROVED },
-      });
-    } catch (err) {
-      throw toHttpException(err);
-    }
+  acceptApplicant(clubId: string, applicantId: string, hostId: string) {
+    return this.decide(
+      clubId,
+      applicantId,
+      hostId,
+      RegistrationStatus.APPROVED,
+    );
   }
 
-  async rejectApplicant(clubId: string, applicantId: string, hostId: string) {
-    try {
-      await this.assertHost(clubId, hostId);
-      return await this.prisma.registration.update({
+  rejectApplicant(clubId: string, applicantId: string, hostId: string) {
+    return this.decide(
+      clubId,
+      applicantId,
+      hostId,
+      RegistrationStatus.REJECTED,
+    );
+  }
+
+  /**
+   * Moves a PENDING registration to `target`. Idempotent when it is already
+   * there. The club row is locked so two concurrent approvals cannot both pass
+   * the capacity check.
+   */
+  private async decide(
+    clubId: string,
+    applicantId: string,
+    hostId: string,
+    target: 'APPROVED' | 'REJECTED',
+  ) {
+    await this.assertHost(clubId, hostId);
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "Club" WHERE id = ${clubId} FOR UPDATE`;
+
+      const registration = await tx.registration.findUnique({
         where: { userId_clubId: { userId: applicantId, clubId } },
-        data: { status: RegistrationStatus.REJECTED },
       });
-    } catch (err) {
-      throw toHttpException(err);
-    }
+      if (!registration) throw new NotFoundException('Applicant not found');
+      if (registration.status === target) return registration;
+      if (registration.status !== RegistrationStatus.PENDING) {
+        throw new ConflictException('Application is no longer pending');
+      }
+
+      if (target === RegistrationStatus.APPROVED) {
+        const club = await tx.club.findUniqueOrThrow({
+          where: { id: clubId },
+        });
+        if ((await this.countApproved(tx, clubId)) >= club.maxMembers) {
+          throw new ConflictException('Club is full');
+        }
+      }
+
+      return tx.registration.update({
+        where: { id: registration.id },
+        data: { status: target },
+      });
+    });
+  }
+
+  private countApproved(
+    db: Pick<PrismaService, 'registration'>,
+    clubId: string,
+  ) {
+    return db.registration.count({
+      where: { clubId, status: RegistrationStatus.APPROVED },
+    });
   }
 
   private async assertHost(clubId: string, userId: string) {
     const club = await this.prisma.club.findUnique({ where: { id: clubId } });
     if (!club) throw new NotFoundException('Club not found');
     if (club.hostId !== userId) throw new ForbiddenException();
+    return club;
   }
 
   private findRaw(id?: string) {

@@ -1,7 +1,6 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { ActivityIndicator, Pressable, Text } from "react-native";
 
-import { brandGradient } from "@/shared/config";
+import { BrandGradient } from "./BrandGradient";
 
 type Props = {
   label: string;
@@ -17,18 +16,13 @@ export function GradientButton({ label, onPress, loading, disabled }: Props) {
       disabled={disabled || loading}
       className="active:opacity-80"
     >
-      <LinearGradient
-        colors={brandGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={{ height: 56, borderRadius: 9999, alignItems: "center", justifyContent: "center" }}
-      >
+      <BrandGradient horizontal style={{ height: 56, borderRadius: 9999, alignItems: "center", justifyContent: "center" }}>
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
           <Text className="text-white font-semibold text-base">{label}</Text>
         )}
-      </LinearGradient>
+      </BrandGradient>
     </Pressable>
   );
 }

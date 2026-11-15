@@ -17,6 +17,9 @@ export function useAuthBootstrap() {
       .then((user) => {
         if (user) router.replace("/(main)/clubs");
       })
+      .catch(() => {
+        // Offline or server error: keep the session, stay on the start screen.
+      })
       .finally(() => {
         SplashScreen.hideAsync().catch(() => {});
       });

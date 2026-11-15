@@ -1,34 +1,34 @@
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
-import type { NextFunction, Request, Response } from 'express';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
-import { TokenService } from './api/auth/token.service';
-import { parseEnv } from './config/env';
+import type { Env } from './config/env';
 
 async function bootstrap() {
-  const env = parseEnv();
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const config = app.get<ConfigService<Env, true>>(ConfigService);
 
-  const app = await NestFactory.create(AppModule);
+  // Rate limiting keys on req.ip; behind a proxy that must be the real client.
+  const proxyHops = config.get('TRUST_PROXY', { infer: true });
+  if (proxyHops !== undefined) {
+    app.set('trust proxy', proxyHops);
+  }
 
+  app.use(helmet());
+
+  const corsOrigins = config.get('CORS_ORIGINS', { infer: true });
   app.enableCors({
     origin:
-      env.NODE_ENV === 'production'
-        ? (env.CORS_ORIGINS?.split(',') ?? false)
+      config.get('NODE_ENV', { infer: true }) === 'production'
+        ? (corsOrigins?.split(',') ?? false)
         : true,
     credentials: true,
   });
 
   app.use(cookieParser());
 
-  const tokens = app.get(TokenService);
-  app.use((req: Request, _res: Response, next: NextFunction) => {
-    const auth = req.headers.authorization;
-    if (auth?.startsWith('Bearer ')) {
-      req.userId = tokens.verifyAccessToken(auth.slice(7));
-    }
-    next();
-  });
-
-  await app.listen(env.PORT);
+  await app.listen(config.get('PORT', { infer: true }));
 }
 void bootstrap();

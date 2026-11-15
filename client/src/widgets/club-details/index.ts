@@ -1,1 +1,1 @@
-export { ClubDetailContainer } from "./ui/ClubDetailContainer";
+export { ClubDetail } from "./ui/ClubDetail";

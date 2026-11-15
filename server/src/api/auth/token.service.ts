@@ -1,7 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash, randomUUID } from 'crypto';
 import type { CookieOptions, Request, Response } from 'express';
+import type { Env } from '../../config/env';
 import { PrismaService } from '../../prisma/prisma.service';
 
 const REFRESH_COOKIE = 'refresh_token';
@@ -16,12 +18,13 @@ export class TokenService {
   constructor(
     private jwt: JwtService,
     private prisma: PrismaService,
+    private config: ConfigService<Env, true>,
   ) {}
 
   verifyAccessToken(token: string): string | undefined {
     try {
       const { sub } = this.jwt.verify<{ sub: string }>(token, {
-        secret: requireEnv('JWT_ACCESS_SECRET'),
+        secret: this.config.get('JWT_ACCESS_SECRET', { infer: true }),
         algorithms: [ALGORITHM],
       });
       return sub;
@@ -34,7 +37,7 @@ export class TokenService {
     return this.jwt.sign(
       { sub: userId },
       {
-        secret: requireEnv('JWT_ACCESS_SECRET'),
+        secret: this.config.get('JWT_ACCESS_SECRET', { infer: true }),
         algorithm: ALGORITHM,
         expiresIn: ACCESS_TTL_SECONDS,
       },
@@ -46,7 +49,7 @@ export class TokenService {
     const token = this.jwt.sign(
       { sub: userId },
       {
-        secret: requireEnv('JWT_REFRESH_SECRET'),
+        secret: this.config.get('JWT_REFRESH_SECRET', { infer: true }),
         algorithm: ALGORITHM,
         expiresIn: REFRESH_TTL_SECONDS,
         jwtid: id,
@@ -69,7 +72,7 @@ export class TokenService {
     ]);
 
     res.cookie(REFRESH_COOKIE, token, {
-      ...cookieOptions(),
+      ...this.cookieOptions(),
       maxAge: REFRESH_TTL_SECONDS * 1000,
     });
   }
@@ -81,7 +84,7 @@ export class TokenService {
     let payload: RefreshPayload;
     try {
       payload = this.jwt.verify<RefreshPayload>(token, {
-        secret: requireEnv('JWT_REFRESH_SECRET'),
+        secret: this.config.get('JWT_REFRESH_SECRET', { infer: true }),
         algorithms: [ALGORITHM],
       });
     } catch {
@@ -115,7 +118,16 @@ export class TokenService {
   }
 
   clearCookie(res: Response): void {
-    res.clearCookie(REFRESH_COOKIE, cookieOptions());
+    res.clearCookie(REFRESH_COOKIE, this.cookieOptions());
+  }
+
+  private cookieOptions(): CookieOptions {
+    return {
+      httpOnly: true,
+      secure: this.config.get('NODE_ENV', { infer: true }) === 'production',
+      sameSite: this.config.get('COOKIE_SAMESITE', { infer: true }) ?? 'lax',
+      path: '/auth',
+    };
   }
 }
 
@@ -125,20 +137,4 @@ function readCookie(req: Request): string | undefined {
 
 function hash(token: string): string {
   return createHash('sha256').update(token).digest('hex');
-}
-
-function cookieOptions(): CookieOptions {
-  const sameSite = (process.env.COOKIE_SAMESITE ?? 'lax').toLowerCase();
-  return {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: sameSite === 'strict' || sameSite === 'none' ? sameSite : 'lax',
-    path: '/auth',
-  };
-}
-
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`${name} is not set`);
-  return value;
 }

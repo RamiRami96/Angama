@@ -1,9 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { brandGradient } from "@/shared/config";
-import { GradientButton } from "@/shared/ui";
+import { BrandGradient, GradientButton } from "@/shared/ui";
 import { CreateClubErrors, CreateClubFields } from "../model/create-club.model";
 
 import { DateTimePickerField } from "./DateTimePickerField";
@@ -16,19 +15,13 @@ type Props = {
   onChange: (key: keyof CreateClubFields, value: string) => void;
   onSubmit: () => void;
   onBack: () => void;
-  top: number;
-  bottom: number;
 };
 
-export function CreateClub({ fields, errors, isLoading, onChange, onSubmit, onBack, top, bottom }: Props) {
+export function CreateClub({ fields, errors, isLoading, onChange, onSubmit, onBack }: Props) {
+  const { top, bottom } = useSafeAreaInsets();
 
   return (
-    <LinearGradient
-      colors={brandGradient}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ flex: 1 }}
-    >
+    <BrandGradient style={{ flex: 1 }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -91,6 +84,6 @@ export function CreateClub({ fields, errors, isLoading, onChange, onSubmit, onBa
 
         <GradientButton label="Create Club" onPress={onSubmit} loading={isLoading} />
       </ScrollView>
-    </LinearGradient>
+    </BrandGradient>
   );
 }

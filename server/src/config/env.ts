@@ -8,6 +8,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   NODE_ENV: z.string().optional(),
   CORS_ORIGINS: z.string().optional(),
+  /** Number of reverse-proxy hops in front of the app (so req.ip is the real client). */
+  TRUST_PROXY: z.coerce.number().int().min(0).optional(),
   COOKIE_SAMESITE: z
     .string()
     .toLowerCase()

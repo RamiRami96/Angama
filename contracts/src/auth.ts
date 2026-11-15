@@ -7,6 +7,8 @@ export const signUpSchema = z.object({
   dateOfBirth: z.iso.date('Use format YYYY-MM-DD'),
 });
 
+// Sign-in only requires a non-empty password: the length rule applies when an
+// account is created, and must not lock out accounts that predate it.
 export const signInSchema = z.object({
   email: z.email('Invalid email address').toLowerCase(),
   password: z.string().min(1, 'Password is required'),

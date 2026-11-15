@@ -1,10 +1,14 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { ClubDetailContainer } from "@/widgets/club-details";
+import { useClubQuery } from "@/entities/club";
+import { ClubDetail } from "@/widgets/club-details";
 
 export function ClubDetailPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { data: club } = useClubQuery(id);
 
-  return <ClubDetailContainer id={id} onBack={() => router.back()} />;
+  if (!club) return null;
+
+  return <ClubDetail club={club} onBack={() => router.back()} />;
 }

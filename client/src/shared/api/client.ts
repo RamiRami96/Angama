@@ -1,34 +1,14 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import Constants from "expo-constants";
 import { z } from "zod";
 
-const debuggerHost = Constants.expoConfig?.hostUri?.split(":")[0];
-export const API = `http://${debuggerHost ?? "localhost"}:3000`;
-const ACCESS_TOKEN_KEY = "access_token";
+import { ApiError, type ApiFieldError } from "./api-error";
+import { API } from "./config";
+import { clearAccessToken, getAccessToken, setAccessToken } from "./token-storage";
 
 const NO_REFRESH_PATHS = ["/auth/sign-in", "/auth/sign-up", "/auth/refresh", "/auth/sign-out"];
 
 const refreshResponseSchema = z.object({ accessToken: z.string() });
 
-let accessTokenCache: string | null | undefined;
 let refreshing: Promise<string | null> | null = null;
-
-export async function getAccessToken(): Promise<string | null> {
-  if (accessTokenCache === undefined) {
-    accessTokenCache = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
-  }
-  return accessTokenCache;
-}
-
-export async function setAccessToken(token: string): Promise<void> {
-  accessTokenCache = token;
-  await AsyncStorage.setItem(ACCESS_TOKEN_KEY, token);
-}
-
-export async function clearAccessToken(): Promise<void> {
-  accessTokenCache = null;
-  await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
-}
 
 function refreshAccessToken(): Promise<string | null> {
   refreshing ??= (async () => {
@@ -37,15 +17,14 @@ function refreshAccessToken(): Promise<string | null> {
         method: "POST",
         credentials: "include",
       });
-      if (!res.ok) {
+      if (res.status === 401) {
         await clearAccessToken();
         return null;
       }
+      if (!res.ok) throw new ApiError(res.status, "Could not refresh session");
       const { accessToken } = refreshResponseSchema.parse(await res.json());
       await setAccessToken(accessToken);
       return accessToken;
-    } catch {
-      return null;
     } finally {
       refreshing = null;
     }
@@ -74,8 +53,11 @@ async function execute(path: string, options: RequestInit): Promise<unknown> {
   }
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { message?: string }).message ?? "Request failed");
+    const body = (await res.json().catch(() => ({}))) as {
+      message?: string;
+      errors?: ApiFieldError[];
+    };
+    throw new ApiError(res.status, body.message ?? "Request failed", body.errors);
   }
 
   const text = await res.text();
