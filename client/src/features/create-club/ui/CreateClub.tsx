@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
+import { brandGradient } from "@/shared/config";
 import { GradientButton } from "@/shared/ui";
 import { CreateClubFields } from "../model/create-club.model";
 
@@ -22,7 +23,7 @@ export function CreateClub({ fields, isLoading, onChange, onSubmit, onBack, top,
 
   return (
     <LinearGradient
-      colors={["#06B6D4", "#4F46E5"]}
+      colors={brandGradient}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{ flex: 1 }}

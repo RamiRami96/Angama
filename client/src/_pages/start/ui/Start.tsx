@@ -1,6 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, Text, View, ViewStyle } from "react-native";
 import Animated, { AnimatedStyle } from "react-native-reanimated";
+import { brandGradient } from "@/shared/config";
 
 import { FloatingLetters } from "./FloatingLetters";
 
@@ -18,7 +19,7 @@ export function Start({ onGetStarted, onSignIn, logoStyle, titleStyle, descStyle
 
   return (
     <LinearGradient
-      colors={["#06B6D4", "#4F46E5"]}
+      colors={brandGradient}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{ flex: 1, alignItems: "center", justifyContent: "space-between", paddingHorizontal: 24, paddingTop: 80, paddingBottom: 48 }}

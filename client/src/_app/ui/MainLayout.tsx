@@ -1,12 +1,12 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
-
 import { BottomNav } from "@/widgets/bottom-nav";
+import { brandGradient } from "@/shared/config";
 
 export function MainLayout() {
   return (
     <LinearGradient
-      colors={["#06B6D4", "#4F46E5"]}
+      colors={brandGradient}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{ flex: 1 }}

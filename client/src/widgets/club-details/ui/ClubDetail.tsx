@@ -8,6 +8,7 @@ import {
   ApplySuccessModal,
 } from "@/features/apply-to-club";
 import { DeleteClubModal } from "@/features/delete-club";
+import { brandGradient } from "@/shared/config";
 
 import { useClubDetail } from "../model/useClubDetail";
 
@@ -27,7 +28,7 @@ export function ClubDetail({ club, onBack }: Props) {
 
   return (
     <LinearGradient
-      colors={["#06B6D4", "#4F46E5"]}
+      colors={brandGradient}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{ flex: 1 }}
