@@ -26,7 +26,7 @@ export function SignUp({
         <View className="items-center gap-1">
           <Text className="text-white text-3xl font-bold">Create Your Account</Text>
           <Text className="text-white/70 text-sm text-center">
-            We're here to help you reach the peaks of learning.{" "}
+            We&apos;re here to help you reach the peaks of learning.{" "}
             <Text className="text-white font-bold">Are you ready?</Text>
           </Text>
         </View>

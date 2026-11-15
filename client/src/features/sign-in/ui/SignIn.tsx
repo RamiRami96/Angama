@@ -74,7 +74,7 @@ export function SignIn({
         <GradientButton label="Log In" onPress={onSubmit} loading={isSubmitting} />
 
         <View className="flex-row justify-center gap-1">
-          <Text className="text-gray-500 text-sm">Don't have an account?</Text>
+          <Text className="text-gray-500 text-sm">Don&apos;t have an account?</Text>
           <Pressable onPress={onNavigateSignUp}>
             <Text className="text-primary text-sm font-semibold">Sign Up</Text>
           </Pressable>
