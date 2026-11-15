@@ -1,161 +1,108 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { ClubsService } from './clubs.service';
 import type { PrismaService } from '../../prisma/prisma.service';
+import { ClubsService } from './clubs.service';
 
 const future = new Date(Date.now() + 86_400_000);
-const past = new Date(Date.now() - 86_400_000);
 
-function setup(
-  club: Partial<{
-    id: string;
-    hostId: string;
-    maxMembers: number;
-    status: string;
-    startDate: Date;
-  }> | null = {},
-) {
-  const clubRow = club && {
+function setup() {
+  const clubRow = (over = {}) => ({
     id: 'c1',
-    hostId: 'host',
-    maxMembers: 2,
+    name: 'Chess',
+    description: '',
+    location: '',
+    maxMembers: 5,
     status: 'ACTIVE',
     startDate: future,
-    ...club,
-  };
+    endDate: future,
+    createdAt: new Date(),
+    hostId: 'host',
+    host: { id: 'host', name: 'H', avatarUrl: null },
+    registrations: [],
+    ...over,
+  });
   const db = {
     club: {
-      findUnique: jest.fn().mockResolvedValue(clubRow),
-      findUniqueOrThrow: jest.fn().mockResolvedValue(clubRow),
-    },
-    registration: {
-      findUnique: jest.fn().mockResolvedValue(null),
-      count: jest.fn().mockResolvedValue(0),
-      upsert: jest
+      findMany: jest.fn().mockResolvedValue([clubRow()]),
+      findUnique: jest.fn().mockResolvedValue(clubRow()),
+      findFirst: jest.fn().mockResolvedValue(null),
+      create: jest
         .fn()
-        .mockImplementation(({ create }: { create: object }) => create),
-      update: jest.fn().mockImplementation(({ data }: { data: object }) => ({
-        id: 'r1',
-        ...data,
-      })),
+        .mockImplementation(({ data }: { data: object }) => clubRow(data)),
+      delete: jest.fn().mockResolvedValue({}),
     },
-    $queryRaw: jest.fn().mockResolvedValue([]),
-    $transaction: jest.fn(),
   };
-  db.$transaction.mockImplementation((fn: (tx: typeof db) => unknown) =>
-    fn(db),
-  );
-  const service = new ClubsService(db as unknown as PrismaService);
-  return { service, db };
+  return {
+    db,
+    service: new ClubsService(db as unknown as PrismaService),
+    clubRow,
+  };
 }
 
-describe('ClubsService.apply', () => {
-  it('404s for an unknown club', async () => {
-    const { service } = setup(null);
-    await expect(service.apply('c1', 'u1')).rejects.toBeInstanceOf(
-      NotFoundException,
+const payload = {
+  name: 'Chess',
+  description: '',
+  location: '',
+  startDate: future.toISOString(),
+  maxMembers: 5,
+};
+
+describe('ClubsService.getAll', () => {
+  it('lists everything by default, capped', async () => {
+    const { service, db } = setup();
+    await service.getAll();
+    expect(db.club.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: {}, take: 100 }),
     );
   });
 
-  it('returns an existing registration without re-checking club state', async () => {
-    const { service, db } = setup({ status: 'CANCELLED' });
-    db.registration.findUnique.mockResolvedValue({ id: 'old' });
-    await expect(service.apply('c1', 'u1')).resolves.toEqual({ id: 'old' });
-    expect(db.registration.upsert).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    ['cancelled', { status: 'CANCELLED' }, /cancelled/],
-    ['already started', { startDate: past }, /started/],
-  ])('rejects applications to a club that is %s', async (_n, club, msg) => {
-    const { service } = setup(club);
-    await expect(service.apply('c1', 'u1')).rejects.toThrow(msg);
-  });
-
-  it('rejects applications when approved members fill the club', async () => {
-    const { service, db } = setup({ maxMembers: 2 });
-    db.registration.count.mockResolvedValue(2);
-    await expect(service.apply('c1', 'u1')).rejects.toBeInstanceOf(
-      ConflictException,
-    );
-  });
-
-  it('creates a PENDING listener registration otherwise', async () => {
-    const { service } = setup();
-    await expect(service.apply('c1', 'u1')).resolves.toMatchObject({
-      userId: 'u1',
-      clubId: 'c1',
-      role: 'LISTENER',
-      status: 'PENDING',
-    });
+  it('filters out clubs that already started when upcoming=true', async () => {
+    const { service, db } = setup();
+    await service.getAll(undefined, { upcoming: true });
+    const { where } = (db.club.findMany.mock.calls as unknown[][])[0][0] as {
+      where: { startDate: { gt: Date } };
+    };
+    expect(where.startDate.gt).toBeInstanceOf(Date);
   });
 });
 
-describe('ClubsService applicant decisions', () => {
-  const pending = { id: 'r1', status: 'PENDING' };
-
-  it('approves a pending applicant when there is room', async () => {
-    const { service, db } = setup({ maxMembers: 2 });
-    db.registration.findUnique.mockResolvedValue(pending);
-    db.registration.count.mockResolvedValue(1);
-    await expect(
-      service.acceptApplicant('c1', 'u1', 'host'),
-    ).resolves.toMatchObject({ status: 'APPROVED' });
-    expect(db.$queryRaw).toHaveBeenCalled(); // club row locked
-  });
-
-  it('refuses to approve beyond maxMembers', async () => {
-    const { service, db } = setup({ maxMembers: 2 });
-    db.registration.findUnique.mockResolvedValue(pending);
-    db.registration.count.mockResolvedValue(2);
-    await expect(service.acceptApplicant('c1', 'u1', 'host')).rejects.toThrow(
-      /full/,
+describe('ClubsService.getOne', () => {
+  it('404s for an unknown club', async () => {
+    const { service, db } = setup();
+    db.club.findUnique.mockResolvedValue(null);
+    await expect(service.getOne('nope')).rejects.toBeInstanceOf(
+      NotFoundException,
     );
-    expect(db.registration.update).not.toHaveBeenCalled();
   });
+});
 
-  it('can still reject when the club is full', async () => {
-    const { service, db } = setup({ maxMembers: 2 });
-    db.registration.findUnique.mockResolvedValue(pending);
-    db.registration.count.mockResolvedValue(2);
-    await expect(
-      service.rejectApplicant('c1', 'u1', 'host'),
-    ).resolves.toMatchObject({ status: 'REJECTED' });
-  });
-
-  it('404s for an unknown applicant instead of a Prisma 500', async () => {
-    const { service } = setup();
-    await expect(
-      service.acceptApplicant('c1', 'ghost', 'host'),
-    ).rejects.toBeInstanceOf(NotFoundException);
-  });
-
-  it('is idempotent when already in the target state', async () => {
+describe('ClubsService.create', () => {
+  it('creates a club with a two-hour end time', async () => {
     const { service, db } = setup();
-    db.registration.findUnique.mockResolvedValue({
-      id: 'r1',
-      status: 'APPROVED',
-    });
-    await expect(
-      service.acceptApplicant('c1', 'u1', 'host'),
-    ).resolves.toMatchObject({ status: 'APPROVED' });
-    expect(db.registration.update).not.toHaveBeenCalled();
+    await service.create('host', payload);
+    const { data } = (db.club.create.mock.calls as unknown[][])[0][0] as {
+      data: { startDate: Date; endDate: Date; hostId: string };
+    };
+    expect(data.endDate.getTime() - data.startDate.getTime()).toBe(7_200_000);
+    expect(data.hostId).toBe('host');
   });
 
-  it('conflicts when the application is no longer pending', async () => {
+  it('refuses a second upcoming club for the same host', async () => {
     const { service, db } = setup();
-    db.registration.findUnique.mockResolvedValue({
-      id: 'r1',
-      status: 'CANCELLED',
-    });
-    await expect(
-      service.acceptApplicant('c1', 'u1', 'host'),
-    ).rejects.toBeInstanceOf(ConflictException);
+    db.club.findFirst.mockResolvedValue({ id: 'existing' });
+    await expect(service.create('host', payload)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+    expect(db.club.create).not.toHaveBeenCalled();
   });
+});
 
-  it('forbids non-hosts', async () => {
-    const { service } = setup();
-    await expect(
-      service.acceptApplicant('c1', 'u1', 'intruder'),
-    ).rejects.toMatchObject({ status: 403 });
+describe('ClubsService.remove', () => {
+  it('only lets the host delete', async () => {
+    const { service, db } = setup();
+    await expect(service.remove('c1', 'intruder')).rejects.toMatchObject({
+      status: 403,
+    });
+    await service.remove('c1', 'host');
+    expect(db.club.delete).toHaveBeenCalledWith({ where: { id: 'c1' } });
   });
 });

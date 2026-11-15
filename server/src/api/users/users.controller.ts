@@ -21,9 +21,4 @@ export class UsersController {
   getMyApplications(@CurrentUser() userId: string) {
     return this.users.getMyApplications(userId);
   }
-
-  @Get('me/hosted-club')
-  getMyHostedClub(@CurrentUser() userId: string) {
-    return this.users.getMyHostedClub(userId);
-  }
 }

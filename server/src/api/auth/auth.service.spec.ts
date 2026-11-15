@@ -54,3 +54,49 @@ describe('AuthService.signIn', () => {
     expect(hash).toMatch(/^\$2[aby]\$10\$/);
   });
 });
+
+describe('AuthService.signUp', () => {
+  const dto = {
+    name: 'Bob',
+    email: 'b@b.co',
+    password: 'password1',
+    dateOfBirth: '2000-01-02',
+  };
+
+  it('rejects an email that is already registered', async () => {
+    const db = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'x' }),
+        create: jest.fn(),
+      },
+    };
+    const service = new AuthService(db as unknown as PrismaService);
+    await expect(service.signUp(dto)).rejects.toMatchObject({ status: 409 });
+    expect(db.user.create).not.toHaveBeenCalled();
+  });
+
+  it('stores a bcrypt hash, never the plain password', async () => {
+    const db = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockImplementation(({ data }: { data: object }) => ({
+          id: 'u1',
+          avatarUrl: null,
+          createdAt: new Date(),
+          ...data,
+        })),
+      },
+    };
+    const service = new AuthService(db as unknown as PrismaService);
+
+    const user = await service.signUp(dto);
+
+    const { data } = (db.user.create.mock.calls as unknown[][])[0][0] as {
+      data: { password: string };
+    };
+    expect(data.password).not.toBe(dto.password);
+    expect(data.password).toMatch(/^\$2[aby]\$10\$/);
+    expect(user).not.toHaveProperty('password');
+    expect(user.dateOfBirth).toBe('2000-01-02');
+  });
+});

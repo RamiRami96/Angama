@@ -4,7 +4,7 @@ import { Pressable, Text, View } from "react-native";
 import { formatDate } from "@/shared/lib";
 
 import { Club } from "../model/club.model";
-import { STATUS_STYLES } from "../model/status-styles";
+import { CLUB_STATUS_STYLE } from "../model/club-status-style";
 
 type Props = {
   club: Club;
@@ -12,7 +12,7 @@ type Props = {
 };
 
 export function ClubCard({ club, onPress }: Props) {
-  const status = STATUS_STYLES[club.status];
+  const status = CLUB_STATUS_STYLE[club.status];
 
   return (
     <Pressable

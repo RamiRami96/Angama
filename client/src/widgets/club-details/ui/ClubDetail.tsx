@@ -39,7 +39,7 @@ export function ClubDetail({ club, onBack }: Props) {
       >
         <ClubHeader club={club} onBack={onBack} />
         <ClubInfoCard club={club} />
-        {!isHost && <ApplyButton club={club} onPress={apply.onApplyPress} />}
+        {!isHost && <ApplyButton club={club} onPress={apply.onApplyPress} loading={apply.isApplying} />}
         {isHost && <DeleteButton onPress={remove.onDeleteOpen} />}
       </ScrollView>
 

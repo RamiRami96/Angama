@@ -8,7 +8,6 @@ export const queryKeys = {
     applicants: (clubId: string) => ["clubs", clubId, "applicants"] as const,
   },
   users: {
-    hostedClub: ["users", "me", "hosted-club"] as const,
     myApplications: ["users", "me", "applications"] as const,
   },
 };

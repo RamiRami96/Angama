@@ -1,10 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 
-import { Application, ApplicationRow } from "@/entities/application";
+import { ApplicationRow, type MyApplication } from "@/entities/application";
 
 type Props = {
-  userApplications: Application[];
+  userApplications: MyApplication[];
   onRefresh: () => void;
 };
 

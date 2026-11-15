@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { toPublicUser } from '../../shared/mapper/user.mapper';
 import { mapRegistrationStatus } from '../../shared/util/registration-status.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { UpdateProfileDto } from '../../contracts';
@@ -12,13 +13,7 @@ export class UsersService {
       where: { id: userId },
       data,
     });
-    const { password: _pw, ...pub } = user;
-    void _pw;
-    return {
-      ...pub,
-      dateOfBirth: pub.dateOfBirth.toISOString().split('T')[0],
-      createdAt: pub.createdAt.toISOString(),
-    };
+    return toPublicUser(user);
   }
 
   async getMyApplications(userId: string) {
@@ -45,12 +40,5 @@ export class UsersService {
         location: r.club.location,
       },
     }));
-  }
-
-  getMyHostedClub(userId: string) {
-    return this.prisma.club.findFirst({
-      where: { hostId: userId },
-      select: { id: true },
-    });
   }
 }

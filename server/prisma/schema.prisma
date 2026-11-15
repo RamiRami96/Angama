@@ -49,6 +49,9 @@ model Club {
   hostId        String
   host          User           @relation(fields: [hostId], references: [id], onDelete: Cascade)
   registrations Registration[]
+
+  @@index([hostId])
+  @@index([startDate])
 }
 
 model Registration {
@@ -63,12 +66,12 @@ model Registration {
   club   Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
 
   @@unique([userId, clubId])
+  @@index([clubId])
 }
 
 enum ClubStatus {
   ACTIVE
   CANCELLED
-  FULL
 }
 
 enum RegistrationRole {

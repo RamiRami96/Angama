@@ -4,14 +4,6 @@ export const applicationStatusSchema = z.enum(["waiting", "approved", "rejected"
 
 export type ApplicationStatus = z.infer<typeof applicationStatusSchema>;
 
-export type Application = {
-  userId: string;
-  userName: string;
-  clubId: string;
-  clubName: string;
-  status: ApplicationStatus;
-};
-
 export const applicantSchema = z.object({
   userId: z.string(),
   user: z.object({

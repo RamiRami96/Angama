@@ -122,10 +122,15 @@ export class TokenService {
   }
 
   private cookieOptions(): CookieOptions {
+    const sameSite =
+      this.config.get('COOKIE_SAMESITE', { infer: true }) ?? 'lax';
     return {
       httpOnly: true,
-      secure: this.config.get('NODE_ENV', { infer: true }) === 'production',
-      sameSite: this.config.get('COOKIE_SAMESITE', { infer: true }) ?? 'lax',
+      // Browsers reject SameSite=None cookies that are not Secure.
+      secure:
+        this.config.get('NODE_ENV', { infer: true }) === 'production' ||
+        sameSite === 'none',
+      sameSite,
       path: '/auth',
     };
   }

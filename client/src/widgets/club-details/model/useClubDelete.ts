@@ -9,15 +9,14 @@ export function useClubDelete(club: Club) {
   const deleteMutation = useDeleteClubMutation();
   const [deleteVisible, setDeleteVisible] = useState(false);
 
-  const handleDelete = async () => {
+  const onDelete = () => {
     setDeleteVisible(false);
-    await deleteMutation.mutateAsync(club.id);
-    router.replace("/(main)/clubs");
+    deleteMutation.mutate(club.id, { onSuccess: () => router.replace("/(main)/clubs") });
   };
 
   return {
     deleteVisible,
-    onDelete: () => void handleDelete(),
+    onDelete,
     onDeleteOpen: () => setDeleteVisible(true),
     onDeleteClose: () => setDeleteVisible(false),
   };

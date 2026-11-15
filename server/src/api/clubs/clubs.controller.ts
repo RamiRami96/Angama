@@ -7,21 +7,34 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { OptionalAuth } from '../auth/decorators/auth-mode.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../shared/pipe/zod-validation.pipe';
-import { createClubSchema, type CreateClubDto } from '../../contracts';
+import {
+  createClubSchema,
+  listClubsQuerySchema,
+  type CreateClubDto,
+  type ListClubsQuery,
+} from '../../contracts';
 import { ClubsService } from './clubs.service';
+import { RegistrationsService } from './registrations.service';
 
 @Controller('clubs')
 export class ClubsController {
-  constructor(private clubs: ClubsService) {}
+  constructor(
+    private clubs: ClubsService,
+    private registrations: RegistrationsService,
+  ) {}
 
   @OptionalAuth()
   @Get()
-  getAll(@CurrentUser() userId?: string) {
-    return this.clubs.getAll(userId);
+  getAll(
+    @Query(new ZodValidationPipe(listClubsQuerySchema)) query: ListClubsQuery,
+    @CurrentUser() userId?: string,
+  ) {
+    return this.clubs.getAll(userId, query);
   }
 
   @OptionalAuth()
@@ -47,12 +60,12 @@ export class ClubsController {
   @Post(':id/apply')
   @HttpCode(200)
   apply(@Param('id') clubId: string, @CurrentUser() userId: string) {
-    return this.clubs.apply(clubId, userId);
+    return this.registrations.apply(clubId, userId);
   }
 
   @Get(':id/applicants')
   getApplicants(@Param('id') clubId: string, @CurrentUser() userId: string) {
-    return this.clubs.getApplicants(clubId, userId);
+    return this.registrations.getApplicants(clubId, userId);
   }
 
   @Patch(':id/applicants/:userId/accept')
@@ -62,7 +75,7 @@ export class ClubsController {
     @Param('userId') applicantId: string,
     @CurrentUser() hostId: string,
   ) {
-    return this.clubs.acceptApplicant(clubId, applicantId, hostId);
+    return this.registrations.accept(clubId, applicantId, hostId);
   }
 
   @Patch(':id/applicants/:userId/reject')
@@ -72,6 +85,6 @@ export class ClubsController {
     @Param('userId') applicantId: string,
     @CurrentUser() hostId: string,
   ) {
-    return this.clubs.rejectApplicant(clubId, applicantId, hostId);
+    return this.registrations.reject(clubId, applicantId, hostId);
   }
 }
