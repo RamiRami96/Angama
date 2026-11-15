@@ -6,6 +6,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { SignUpDto } from '../../contracts';
+import { toPublicUser } from '../../shared/mapper/user.mapper';
 
 const BCRYPT_COST = 10;
 // Valid bcrypt hash (same cost) compared against when the email is unknown, so
@@ -35,7 +36,7 @@ export class AuthService {
       },
     });
 
-    return this.strip(user);
+    return toPublicUser(user);
   }
 
   async signIn(email: string, password: string) {
@@ -49,34 +50,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    return this.strip(user);
+    return toPublicUser(user);
   }
 
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
-    return user ? this.strip(user) : null;
+    return user ? toPublicUser(user) : null;
   }
 
   async deleteAccount(userId: string) {
     await this.prisma.user.delete({ where: { id: userId } });
-  }
-
-  private strip(user: {
-    id: string;
-    name: string;
-    email: string;
-    dateOfBirth: Date;
-    avatarUrl: string | null;
-    createdAt: Date;
-    password: string;
-  }) {
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      avatarUrl: user.avatarUrl,
-      dateOfBirth: user.dateOfBirth.toISOString().split('T')[0],
-      createdAt: user.createdAt.toISOString(),
-    };
   }
 }

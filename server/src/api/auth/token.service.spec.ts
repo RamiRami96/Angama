@@ -72,6 +72,21 @@ describe('TokenService refresh tokens', () => {
     );
   });
 
+  it('forces Secure when SameSite=None, even outside production', async () => {
+    const { service, res } = setup();
+    env.NODE_ENV = 'development';
+    try {
+      await service.issueRefreshToken('u1', res);
+    } finally {
+      env.NODE_ENV = 'production';
+    }
+    expect(res.cookie).toHaveBeenCalledWith(
+      'refresh_token',
+      expect.any(String),
+      expect.objectContaining({ secure: true, sameSite: 'none' }),
+    );
+  });
+
   async function issuedToken(
     service: TokenService,
     res: Response & { cookie: jest.Mock },

@@ -3,6 +3,7 @@ import {
   createClubSchema,
   signInSchema,
   signUpSchema,
+  listClubsQuerySchema,
   updateProfileSchema,
 } from '../../contracts';
 import { parseEnv } from '../../config/env';
@@ -77,6 +78,26 @@ describe('schemas', () => {
     expect(
       updateProfileSchema.safeParse({ avatarUrl: 'not a url' }).success,
     ).toBe(false);
+  });
+
+  it('avatarUrl is http(s) only and can be null to clear it', () => {
+    const ok = (avatarUrl: unknown) =>
+      updateProfileSchema.safeParse({ avatarUrl }).success;
+    expect(ok('https://cdn.example.com/a.png')).toBe(true);
+    expect(ok(null)).toBe(true);
+    expect(ok('javascript:alert(1)')).toBe(false);
+    expect(ok('data:text/html;base64,AAAA')).toBe(false);
+    expect(ok('ftp://example.com/a.png')).toBe(false);
+  });
+
+  it('list query parses upcoming as a boolean string', () => {
+    expect(listClubsQuerySchema.parse({ upcoming: 'true' })).toEqual({
+      upcoming: true,
+    });
+    expect(listClubsQuerySchema.parse({})).toEqual({});
+    expect(listClubsQuerySchema.safeParse({ upcoming: 'maybe' }).success).toBe(
+      false,
+    );
   });
 });
 

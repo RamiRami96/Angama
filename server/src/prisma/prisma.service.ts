@@ -9,6 +9,8 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor(config: ConfigService<Env, true>) {
+    // DIRECT_URL (non-pooled) is deliberately preferred at runtime when set;
+    // DATABASE_URL is the fallback and is what prisma.config.ts uses for the CLI.
     super({
       datasources: {
         db: {
