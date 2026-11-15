@@ -11,24 +11,19 @@ export function CreateClubContainer() {
   const router = useRouter();
   const { top, bottom } = useSafeAreaInsets();
   const createClubMutation = useCreateClubMutation();
-  const { fields, handleChange } = useCreateClubForm();
+  const { fields, errors, handleChange, validate } = useCreateClubForm();
 
   const handleSubmit = async () => {
-    await createClubMutation.mutateAsync({
-      name: fields.name || "Untitled Club",
-      description: fields.description,
-      location: fields.location,
-      startDate: fields.startDate
-        ? new Date(fields.startDate).toISOString()
-        : new Date().toISOString(),
-      maxMembers: parseInt(fields.maxMembers, 10) || 20,
-    });
+    const data = validate();
+    if (!data) return;
+    await createClubMutation.mutateAsync(data);
     router.replace("/(main)/clubs");
   };
 
   return (
     <CreateClub
       fields={fields}
+      errors={errors}
       isLoading={createClubMutation.isPending}
       onChange={handleChange}
       onSubmit={handleSubmit}

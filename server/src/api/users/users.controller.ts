@@ -8,6 +8,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { ZodValidationPipe } from '../../shared/pipe/zod-validation.pipe';
+import { updateProfileSchema, type UpdateProfileDto } from './users.schemas';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -17,7 +19,7 @@ export class UsersController {
   @Patch('me')
   @HttpCode(200)
   updateProfile(
-    @Body() body: { name?: string; avatarUrl?: string },
+    @Body(new ZodValidationPipe(updateProfileSchema)) body: UpdateProfileDto,
     @Req() req: Request,
   ) {
     return this.users.updateProfile(this.requireUser(req), body);

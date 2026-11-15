@@ -1,8 +1,8 @@
-import type { User } from "@/entities/user";
-import { request, setAccessToken } from "@/shared/api";
+import { authResponseSchema, type User } from "@/entities/user";
+import { requestParsed, setAccessToken } from "@/shared/api";
 
 export async function signIn(email: string, password: string): Promise<User> {
-  const { user, accessToken } = await request<{ user: User; accessToken: string }>("/auth/sign-in", {
+  const { user, accessToken } = await requestParsed("/auth/sign-in", authResponseSchema, {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });

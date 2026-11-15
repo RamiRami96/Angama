@@ -13,6 +13,13 @@ import {
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './guards/auth.guard';
+import { ZodValidationPipe } from '../../shared/pipe/zod-validation.pipe';
+import {
+  signInSchema,
+  signUpSchema,
+  type SignInDto,
+  type SignUpDto,
+} from './auth.schemas';
 import { TokenService } from './token.service';
 
 @Controller('auth')
@@ -24,13 +31,7 @@ export class AuthController {
 
   @Post('sign-up')
   async signUp(
-    @Body()
-    body: {
-      name: string;
-      email: string;
-      password: string;
-      dateOfBirth: string;
-    },
+    @Body(new ZodValidationPipe(signUpSchema)) body: SignUpDto,
     @Res({ passthrough: true }) res: Response,
   ) {
     const user = await this.auth.signUp(body);
@@ -40,7 +41,7 @@ export class AuthController {
   @Post('sign-in')
   @HttpCode(200)
   async signIn(
-    @Body() body: { email: string; password: string },
+    @Body(new ZodValidationPipe(signInSchema)) body: SignInDto,
     @Res({ passthrough: true }) res: Response,
   ) {
     const user = await this.auth.signIn(body.email, body.password);

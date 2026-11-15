@@ -7,6 +7,7 @@ import { RegistrationStatus } from '../../../generated/prisma/enums';
 import { mapRegistrationStatus } from '../../shared/util/registration-status.util';
 import { toHttpException } from '../../shared/util/http-exception.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { CreateClubDto } from './clubs.schemas';
 
 type ClubRow = Awaited<ReturnType<ClubsService['findRaw']>>[number];
 
@@ -33,16 +34,7 @@ export class ClubsService {
     }
   }
 
-  async create(
-    userId: string,
-    data: {
-      name: string;
-      description: string;
-      location: string;
-      startDate: string;
-      maxMembers: number;
-    },
-  ) {
+  async create(userId: string, data: CreateClubDto) {
     try {
       const startDate = new Date(data.startDate);
       const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);

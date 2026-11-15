@@ -11,6 +11,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { ZodValidationPipe } from '../../shared/pipe/zod-validation.pipe';
+import { createClubSchema, type CreateClubDto } from './clubs.schemas';
 import { ClubsService } from './clubs.service';
 
 @Controller('clubs')
@@ -29,14 +31,7 @@ export class ClubsController {
 
   @Post()
   create(
-    @Body()
-    body: {
-      name: string;
-      description: string;
-      location: string;
-      startDate: string;
-      maxMembers: number;
-    },
+    @Body(new ZodValidationPipe(createClubSchema)) body: CreateClubDto,
     @Req() req: Request,
   ) {
     return this.clubs.create(this.requireUser(req), body);

@@ -1,9 +1,9 @@
-import { request } from "@/shared/api";
+import { requestParsed } from "@/shared/api";
 
-import { Club } from "../model/club.model";
+import { Club, clubListSchema, clubSchema } from "../model/club.model";
 
 export const clubsService = {
-  getAll: (): Promise<Club[]> => request("/clubs"),
+  getAll: (): Promise<Club[]> => requestParsed("/clubs", clubListSchema),
 
-  getOne: (id: string): Promise<Club> => request(`/clubs/${id}`),
+  getOne: (id: string): Promise<Club> => requestParsed(`/clubs/${id}`, clubSchema),
 };
