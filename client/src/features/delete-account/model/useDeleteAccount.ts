@@ -9,10 +9,9 @@ export function useDeleteAccount() {
 
   const handleDeleteAccount = () => setDeleteAccountVisible(true);
 
-  const confirmDeleteAccount = async () => {
+  const confirmDeleteAccount = () => {
     setDeleteAccountVisible(false);
-    await mutation.mutateAsync();
-    router.replace("/");
+    mutation.mutate(undefined, { onSuccess: () => router.replace("/") });
   };
 
   return {

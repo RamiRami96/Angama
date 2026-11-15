@@ -30,14 +30,12 @@ export function useApplicants(hostedClub: Club | null, user: User | null) {
       }))
     : [];
 
-  const handleAccept = async (userId: string) => {
-    if (!hostedClub) return;
-    await acceptMutation.mutateAsync({ clubId: hostedClub.id, userId });
+  const handleAccept = (userId: string) => {
+    if (hostedClub) acceptMutation.mutate({ clubId: hostedClub.id, userId });
   };
 
-  const handleReject = async (userId: string) => {
-    if (!hostedClub) return;
-    await rejectMutation.mutateAsync({ clubId: hostedClub.id, userId });
+  const handleReject = (userId: string) => {
+    if (hostedClub) rejectMutation.mutate({ clubId: hostedClub.id, userId });
   };
 
   const handleRefreshApplications = async () => {

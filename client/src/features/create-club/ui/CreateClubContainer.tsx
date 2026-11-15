@@ -11,11 +11,10 @@ export function CreateClubContainer() {
   const createClubMutation = useCreateClubMutation();
   const { fields, errors, handleChange, validate } = useCreateClubForm();
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     const data = validate();
     if (!data) return;
-    await createClubMutation.mutateAsync(data);
-    router.replace("/(main)/clubs");
+    createClubMutation.mutate(data, { onSuccess: () => router.replace("/(main)/clubs") });
   };
 
   return (
