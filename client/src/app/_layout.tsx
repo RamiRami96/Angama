@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { authService } from "@/shared/services";
-import { queryKeys } from "@/shared/queries/query-keys";
+import { queryKeys } from "@/shared/api";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 

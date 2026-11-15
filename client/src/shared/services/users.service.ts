@@ -1,4 +1,4 @@
-import { request } from "./api";
+import { request } from "@/shared/api";
 
 export const usersService = {
   getHostedClub: (): Promise<{ id: string } | null> =>

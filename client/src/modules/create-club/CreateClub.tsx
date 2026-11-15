@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { GradientButton } from "@/shared/components";
+import { GradientButton } from "@/shared/ui";
 import { CreateClubFields } from "./model/create-club.model";
 
 import { DateTimePickerField } from "./components/DateTimePickerField";

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Club } from "@/shared/models/club.model";
 import { clubsService, CreateClubData } from "@/shared/services/clubs.service";
 
-import { queryKeys } from "./query-keys";
+import { queryKeys } from "@/shared/api";
 
 export function useClubsQuery() {
   return useQuery({

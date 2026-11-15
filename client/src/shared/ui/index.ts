@@ -1,4 +1,3 @@
-export { BottomNav } from "./BottomNav";
 export { ConfirmModal } from "./ConfirmModal";
 export { DatePickerInput } from "./DatePickerInput";
 export { GradientButton } from "./GradientButton";

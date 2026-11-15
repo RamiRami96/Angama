@@ -3,8 +3,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import type { EdgeInsets } from "react-native-safe-area-context";
 
-import { GradientButton } from "@/shared/components";
-import { formatDate, formatTime } from "@/shared/utils/date.utils";
+import { GradientButton } from "@/shared/ui";
+import { formatDate, formatTime } from "@/shared/lib";
 import type { Club } from "@/shared/models/club.model";
 
 import { AlreadyAppliedModal } from "./components/AlreadyAppliedModal";

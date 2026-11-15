@@ -1,7 +1,7 @@
 import { Control, Controller, FieldErrors } from "react-hook-form";
 import { Pressable, Text, View } from "react-native";
 
-import { GradientButton, Input, ScreenLayout } from "@/shared/components";
+import { GradientButton, Input, ScreenLayout } from "@/shared/ui";
 
 import { SignInFormData } from "./schemas/sign-in.schema";
 

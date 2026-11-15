@@ -1,7 +1,7 @@
 import { Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ConfirmModal } from "@/shared/components";
+import { ConfirmModal } from "@/shared/ui";
 
 import { useApplicants } from "../hooks/useApplicants";
 import { useCurrentUser } from "../hooks/useCurrentUser";

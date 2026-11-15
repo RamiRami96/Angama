@@ -1,5 +1,5 @@
 import { Club } from "@/shared/models/club.model";
-import { request } from "./api";
+import { request } from "@/shared/api";
 
 export type CreateClubData = {
   name: string;

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { applicationsService } from "@/shared/services";
 
-import { queryKeys } from "./query-keys";
+import { queryKeys } from "@/shared/api";
 
 export function useApplicantsQuery(clubId: string | undefined) {
   return useQuery({

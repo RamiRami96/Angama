@@ -1,6 +1,6 @@
 import { FlatList, RefreshControl, Text, View } from "react-native";
 
-import { GradientButton } from "@/shared/components";
+import { GradientButton } from "@/shared/ui";
 import { Club } from "@/shared/models/club.model";
 
 import { ClubCard } from "./components/ClubCard";

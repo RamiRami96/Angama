@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, Text, View } from "react-native";
 
-import { GradientButton } from "@/shared/components";
+import { GradientButton } from "@/shared/ui";
 
 type Props = {
   visible: boolean;

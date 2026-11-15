@@ -1,7 +1,7 @@
 import { Control, Controller, FieldErrors } from "react-hook-form";
 import { Pressable, Text, View } from "react-native";
 
-import { DatePickerInput, GradientButton, Input, ScreenLayout } from "@/shared/components";
+import { DatePickerInput, GradientButton, Input, ScreenLayout } from "@/shared/ui";
 
 import { SignUpFormData } from "./schemas/sign-up.schema";
 

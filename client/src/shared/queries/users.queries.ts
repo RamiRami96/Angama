@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { usersService } from "@/shared/services";
 
 import { useClubQuery } from "./clubs.queries";
-import { queryKeys } from "./query-keys";
+import { queryKeys } from "@/shared/api";
 
 export function useHostedClubQuery(userId: string | undefined) {
   const hostedClubRefQuery = useQuery({

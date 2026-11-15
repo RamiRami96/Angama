@@ -1,6 +1,6 @@
 import { Text } from "react-native";
 
-import { ConfirmModal } from "@/shared/components";
+import { ConfirmModal } from "@/shared/ui";
 
 type Props = {
   visible: boolean;

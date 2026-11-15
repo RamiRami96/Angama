@@ -1,7 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 
-import { BottomNav } from "@/shared/components";
+import { BottomNav } from "@/shared/components/BottomNav";
 
 export default function MainLayout() {
   return (

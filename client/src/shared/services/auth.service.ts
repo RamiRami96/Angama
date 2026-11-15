@@ -1,5 +1,5 @@
 import { User } from "@/shared/models/user.model";
-import { clearSid, request, storeSid } from "./api";
+import { clearSid, request, storeSid } from "@/shared/api";
 
 export const authService = {
   async signUp(data: { name: string; email: string; password: string; dateOfBirth: string }): Promise<User> {
