@@ -1,4 +1,4 @@
-import { Club } from "@/shared/models/club.model";
+import { Club } from "@/entities/club";
 
 export function useClubMembers(club: Club) {
   const membersRatio = club.currentMemberCount / club.maxMembers;

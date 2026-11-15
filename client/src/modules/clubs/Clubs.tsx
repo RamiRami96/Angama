@@ -1,9 +1,8 @@
 import { FlatList, RefreshControl, Text, View } from "react-native";
 
 import { GradientButton } from "@/shared/ui";
-import { Club } from "@/shared/models/club.model";
+import { Club, ClubCard } from "@/entities/club";
 
-import { ClubCard } from "./components/ClubCard";
 import { SearchBar } from "./components/SearchBar";
 
 export type ClubsProps = {

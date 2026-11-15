@@ -1,31 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { Club } from "@/shared/models/club.model";
 import { clubsService, CreateClubData } from "@/shared/services/clubs.service";
 
 import { queryKeys } from "@/shared/api";
-
-export function useClubsQuery() {
-  return useQuery({
-    queryKey: queryKeys.clubs.all,
-    queryFn: clubsService.getAll,
-  });
-}
-
-export function useClubQuery(id: string) {
-  const queryClient = useQueryClient();
-  return useQuery({
-    queryKey: queryKeys.clubs.detail(id),
-    queryFn: () => clubsService.getOne(id),
-    enabled: !!id,
-    initialData: () =>
-      queryClient
-        .getQueryData<Club[]>(queryKeys.clubs.all)
-        ?.find((c) => c.id === id),
-    initialDataUpdatedAt: () =>
-      queryClient.getQueryState(queryKeys.clubs.all)?.dataUpdatedAt,
-  });
-}
 
 export function useCreateClubMutation() {
   const queryClient = useQueryClient();

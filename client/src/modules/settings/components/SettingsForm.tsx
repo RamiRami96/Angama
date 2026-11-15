@@ -1,10 +1,10 @@
 import { Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useCurrentUser } from "@/entities/user";
 import { ConfirmModal } from "@/shared/ui";
 
 import { useApplicants } from "../hooks/useApplicants";
-import { useCurrentUser } from "../hooks/useCurrentUser";
 import { useDeleteAccount } from "../hooks/useDeleteAccount";
 import { useHostedClub } from "../hooks/useHostedClub";
 import { useSignOut } from "../hooks/useSignOut";

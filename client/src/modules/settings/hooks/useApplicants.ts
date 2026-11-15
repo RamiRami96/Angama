@@ -1,12 +1,10 @@
-import { Club } from "@/shared/models/club.model";
-import { User } from "@/shared/models/user.model";
+import { Application, useApplicantsQuery, useMyApplicationsQuery } from "@/entities/application";
+import { Club } from "@/entities/club";
+import { User } from "@/entities/user";
 import {
   useAcceptApplicantMutation,
-  useApplicantsQuery,
-  useMyApplicationsQuery,
   useRejectApplicantMutation,
 } from "@/shared/queries/applications.queries";
-import { Application } from "@/shared/models/application.model";
 
 export function useApplicants(hostedClub: Club | null, user: User | null) {
   const applicantsQuery = useApplicantsQuery(hostedClub?.id);

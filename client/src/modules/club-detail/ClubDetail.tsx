@@ -5,7 +5,7 @@ import type { EdgeInsets } from "react-native-safe-area-context";
 
 import { GradientButton } from "@/shared/ui";
 import { formatDate, formatTime } from "@/shared/lib";
-import type { Club } from "@/shared/models/club.model";
+import type { Club } from "@/entities/club";
 
 import { AlreadyAppliedModal } from "./components/AlreadyAppliedModal";
 import { ApplySuccessModal } from "./components/ApplySuccessModal";

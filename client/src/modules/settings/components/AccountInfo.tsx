@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 
-import { User } from "@/shared/models/user.model";
+import { User } from "@/entities/user";
 
 import { Row } from "./Row";
 

@@ -1,10 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 
-import { Club } from "@/shared/models/club.model";
 import { formatDate } from "@/shared/lib";
 
-import { STATUS_STYLES } from "@/shared/const/status-styles";
+import { Club } from "../model/club.model";
+import { STATUS_STYLES } from "../model/status-styles";
 
 type Props = {
   club: Club;

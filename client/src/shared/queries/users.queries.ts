@@ -1,16 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useHostedClubRefQuery } from "@/entities/user";
+import { useClubQuery } from "@/entities/club";
 
-import { usersService } from "@/shared/services";
-
-import { useClubQuery } from "./clubs.queries";
-import { queryKeys } from "@/shared/api";
-
+// Temporary stopgap (removed in Task 6): composes the user + club entities.
 export function useHostedClubQuery(userId: string | undefined) {
-  const hostedClubRefQuery = useQuery({
-    queryKey: queryKeys.users.hostedClub,
-    queryFn: usersService.getHostedClub,
-    enabled: !!userId,
-  });
+  const hostedClubRefQuery = useHostedClubRefQuery(userId);
 
   const clubQuery = useClubQuery(hostedClubRefQuery.data?.id ?? "");
 

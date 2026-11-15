@@ -1,7 +1,7 @@
 import { Text, View } from "react-native";
 
-import { Application } from "@/shared/models/application.model";
-import { STATUS_STYLE } from "../const/status-style.const";
+import { Application } from "../model/application.model";
+import { STATUS_STYLE } from "../model/status-style";
 
 type Props = {
   app: Application;

@@ -1,9 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 
-import { Application } from "@/shared/models/application.model";
-
-import { ApplicationRow } from "./ApplicationRow";
+import { Application, ApplicationRow } from "@/entities/application";
 
 type Props = {
   userApplications: Application[];

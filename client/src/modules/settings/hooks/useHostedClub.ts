@@ -1,4 +1,4 @@
-import { User } from "@/shared/models/user.model";
+import { User } from "@/entities/user";
 import { useHostedClubQuery } from "@/shared/queries/users.queries";
 
 export function useHostedClub(user: User | null) {

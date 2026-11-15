@@ -1,15 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { authService } from "@/shared/services";
 
 import { queryKeys } from "@/shared/api";
-
-export function useCurrentUserQuery() {
-  return useQuery({
-    queryKey: queryKeys.auth.me,
-    queryFn: authService.getCurrentUser,
-  });
-}
 
 export function useSignInMutation() {
   const queryClient = useQueryClient();

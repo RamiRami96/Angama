@@ -1,4 +1,4 @@
-import { User } from "@/shared/models/user.model";
+import type { User } from "@/entities/user";
 import { clearSid, request, storeSid } from "@/shared/api";
 
 export const authService = {
@@ -23,15 +23,6 @@ export const authService = {
   async signOut(): Promise<void> {
     await request("/auth/sign-out", { method: "POST" }).catch(() => {});
     await clearSid();
-  },
-
-  async getCurrentUser(): Promise<User | null> {
-    try {
-      return await request<User>("/auth/me");
-    } catch {
-      await clearSid();
-      return null;
-    }
   },
 
   async deleteAccount(): Promise<void> {

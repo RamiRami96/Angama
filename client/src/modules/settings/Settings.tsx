@@ -1,8 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { Application } from "@/shared/models/application.model";
-import { User } from "@/shared/models/user.model";
+import { Application } from "@/entities/application";
+import { User } from "@/entities/user";
 
 import { AccountInfo } from "./components/AccountInfo";
 import { ApplicantsList } from "./components/ApplicantsList";

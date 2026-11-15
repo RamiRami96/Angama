@@ -1,8 +1,9 @@
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { useCurrentUser } from "@/modules/settings/hooks/useCurrentUser";
-import { useApplyToClubMutation, useClubQuery, useDeleteClubMutation } from "@/shared/queries/clubs.queries";
+import { useClubQuery } from "@/entities/club";
+import { useCurrentUser } from "@/entities/user";
+import { useApplyToClubMutation, useDeleteClubMutation } from "@/shared/queries/clubs.queries";
 
 import { ClubDetail } from "../ClubDetail";
 import { useClubDetailModals } from "../hooks/useClubDetailModals";

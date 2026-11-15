@@ -1,4 +1,4 @@
-import { Club } from "@/shared/models/club.model";
+import type { Club } from "@/entities/club";
 import { request } from "@/shared/api";
 
 export type CreateClubData = {
@@ -10,10 +10,6 @@ export type CreateClubData = {
 };
 
 export const clubsService = {
-  getAll: (): Promise<Club[]> => request("/clubs"),
-
-  getOne: (id: string): Promise<Club> => request(`/clubs/${id}`),
-
   create: (data: CreateClubData): Promise<Club> =>
     request("/clubs", { method: "POST", body: JSON.stringify(data) }),
 

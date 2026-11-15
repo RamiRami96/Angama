@@ -1,4 +1,4 @@
-import { Club } from "@/shared/models/club.model";
+import { Club } from "./club.model";
 
 export const STATUS_STYLES: Record<Club["status"], { bg: string; text: string; label: string }> = {
   active: { bg: "bg-green-500/20", text: "text-green-300", label: "Active" },

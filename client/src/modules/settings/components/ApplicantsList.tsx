@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 
-import { Application } from "@/shared/models/application.model";
+import { Application } from "@/entities/application";
 
 import { ApplicantRow } from "./ApplicantRow";
 

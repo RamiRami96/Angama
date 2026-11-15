@@ -1,4 +1,4 @@
-import { useClubsQuery } from "@/shared/queries/clubs.queries";
+import { useClubsQuery } from "@/entities/club";
 
 export function useClubs() {
   const { data, isRefetching, refetch } = useClubsQuery();

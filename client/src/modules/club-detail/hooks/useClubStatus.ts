@@ -1,5 +1,4 @@
-import { Club } from "@/shared/models/club.model";
-import { STATUS_STYLES } from "@/shared/const/status-styles";
+import { Club, STATUS_STYLES } from "@/entities/club";
 
 const APPLY_LABELS: Record<string, string> = {
   full: "Club is Full",
