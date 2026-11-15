@@ -7,7 +7,7 @@ Edit the files in `src/`, then run:
 
 ```sh
 node contracts/sync.mjs          # copies into server/src/contracts and client/src/shared/contracts
-node contracts/sync.mjs --check  # fails if a copy has drifted (use in CI)
+node contracts/sync.mjs --check  # fails if a copy has drifted (also run by the server test suite)
 ```
 
 The copies are committed so each app builds on its own (Nest `dist` layout,
