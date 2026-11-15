@@ -1,3 +1,3 @@
-import { StartPage } from "@/pages/StartPage";
+import { StartPage } from "@/_pages/start";
 
 export default StartPage;

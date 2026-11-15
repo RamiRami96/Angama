@@ -2,7 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, Text, View, ViewStyle } from "react-native";
 import Animated, { AnimatedStyle } from "react-native-reanimated";
 
-import { FloatingLetters } from "./components/FloatingLetters";
+import { FloatingLetters } from "./FloatingLetters";
 
 export type StartProps = {
   onGetStarted: () => void;

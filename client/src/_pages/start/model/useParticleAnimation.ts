@@ -8,7 +8,7 @@ import {
   withTiming,
 } from "react-native-reanimated";
 
-import { Particle } from "../const/particles.const";
+import { Particle } from "../config/particles.const";
 
 export function useParticleAnimation(particle: Particle, screenHeight: number) {
   const y = useSharedValue(screenHeight);

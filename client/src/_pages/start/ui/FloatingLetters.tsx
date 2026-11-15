@@ -1,6 +1,6 @@
 import { useWindowDimensions, View } from "react-native";
 
-import { PARTICLES } from "../const/particles.const";
+import { PARTICLES } from "../config/particles.const";
 import { FloatingLetter } from "./FloatingLetter";
 
 export function FloatingLetters() {

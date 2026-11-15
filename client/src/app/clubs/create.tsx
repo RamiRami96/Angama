@@ -1,3 +1,3 @@
-import { CreateClubPage } from "@/pages/CreateClubPage";
+import { CreateClubPage } from "@/_pages/create-club";
 
 export default CreateClubPage;

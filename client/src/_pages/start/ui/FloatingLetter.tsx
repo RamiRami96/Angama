@@ -1,7 +1,7 @@
 import Animated from "react-native-reanimated";
 
-import { Particle } from "../const/particles.const";
-import { useParticleAnimation } from "../hooks/useParticleAnimation";
+import { Particle } from "../config/particles.const";
+import { useParticleAnimation } from "../model/useParticleAnimation";
 
 type Props = { particle: Particle; screenHeight: number };
 

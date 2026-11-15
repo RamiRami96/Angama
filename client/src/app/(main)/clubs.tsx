@@ -1,3 +1,3 @@
-import { ClubsPage } from "@/pages/ClubsPage";
+import { ClubsPage } from "@/_pages/clubs";
 
 export default ClubsPage;

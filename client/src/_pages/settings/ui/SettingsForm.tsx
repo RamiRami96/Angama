@@ -4,11 +4,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCurrentUser } from "@/entities/user";
 import { ConfirmModal } from "@/shared/ui";
 
-import { useApplicants } from "../hooks/useApplicants";
+import { useApplicants } from "../model/useApplicants";
 import { useDeleteAccount } from "@/features/delete-account";
-import { useHostedClub } from "../hooks/useHostedClub";
+import { useHostedClub } from "../model/useHostedClub";
 import { useSignOut } from "@/features/sign-out";
-import { Settings } from "../Settings";
+import { Settings } from "./Settings";
 
 export function SettingsForm() {
   const { top } = useSafeAreaInsets();
