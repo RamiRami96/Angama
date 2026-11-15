@@ -2,6 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { z } from "zod";
 
+import { ApiError, type ApiFieldError } from "./api-error";
+
 const debuggerHost = Constants.expoConfig?.hostUri?.split(":")[0];
 export const API = `http://${debuggerHost ?? "localhost"}:3000`;
 const ACCESS_TOKEN_KEY = "access_token";
@@ -37,15 +39,14 @@ function refreshAccessToken(): Promise<string | null> {
         method: "POST",
         credentials: "include",
       });
-      if (!res.ok) {
+      if (res.status === 401) {
         await clearAccessToken();
         return null;
       }
+      if (!res.ok) throw new ApiError(res.status, "Could not refresh session");
       const { accessToken } = refreshResponseSchema.parse(await res.json());
       await setAccessToken(accessToken);
       return accessToken;
-    } catch {
-      return null;
     } finally {
       refreshing = null;
     }
@@ -74,8 +75,11 @@ async function execute(path: string, options: RequestInit): Promise<unknown> {
   }
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { message?: string }).message ?? "Request failed");
+    const body = (await res.json().catch(() => ({}))) as {
+      message?: string;
+      errors?: ApiFieldError[];
+    };
+    throw new ApiError(res.status, body.message ?? "Request failed", body.errors);
   }
 
   const text = await res.text();
