@@ -9,6 +9,7 @@ import {
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -22,6 +23,9 @@ import {
 } from './auth.schemas';
 import { TokenService } from './token.service';
 
+/** Brute-force / credential-stuffing ceiling for sign-in and sign-up, per IP. */
+const CREDENTIAL_LIMIT = { default: { limit: 10, ttl: 60_000 } };
+
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -30,6 +34,7 @@ export class AuthController {
   ) {}
 
   @Public()
+  @Throttle(CREDENTIAL_LIMIT)
   @Post('sign-up')
   async signUp(
     @Body(new ZodValidationPipe(signUpSchema)) body: SignUpDto,
@@ -40,6 +45,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle(CREDENTIAL_LIMIT)
   @Post('sign-in')
   @HttpCode(200)
   async signIn(
