@@ -29,14 +29,12 @@ function setup() {
     db as unknown as PrismaService,
     config,
   );
-  const res = {
-    cookie: jest.fn(),
-    clearCookie: jest.fn(),
-  } as unknown as Response & {
-    cookie: jest.Mock;
-    clearCookie: jest.Mock;
-  };
-  return { service, db, res };
+  // Kept as standalone mocks (not read back off `res`) so assertions do not
+  // trip @typescript-eslint/unbound-method.
+  const cookie = jest.fn();
+  const clearCookie = jest.fn();
+  const res = { cookie, clearCookie } as unknown as Response;
+  return { service, db, res, cookie, clearCookie };
 }
 
 const reqWithCookie = (token?: string) =>
@@ -58,9 +56,9 @@ describe('TokenService access tokens', () => {
 
 describe('TokenService refresh tokens', () => {
   it('sets an httpOnly cookie using validated config (secure + sameSite)', async () => {
-    const { service, res } = setup();
+    const { service, res, cookie } = setup();
     await service.issueRefreshToken('u1', res);
-    expect(res.cookie).toHaveBeenCalledWith(
+    expect(cookie).toHaveBeenCalledWith(
       'refresh_token',
       expect.any(String),
       expect.objectContaining({
@@ -73,14 +71,14 @@ describe('TokenService refresh tokens', () => {
   });
 
   it('forces Secure when SameSite=None, even outside production', async () => {
-    const { service, res } = setup();
+    const { service, res, cookie } = setup();
     env.NODE_ENV = 'development';
     try {
       await service.issueRefreshToken('u1', res);
     } finally {
       env.NODE_ENV = 'production';
     }
-    expect(res.cookie).toHaveBeenCalledWith(
+    expect(cookie).toHaveBeenCalledWith(
       'refresh_token',
       expect.any(String),
       expect.objectContaining({ secure: true, sameSite: 'none' }),
@@ -89,26 +87,27 @@ describe('TokenService refresh tokens', () => {
 
   async function issuedToken(
     service: TokenService,
-    res: Response & { cookie: jest.Mock },
+    res: Response,
+    cookie: jest.Mock,
   ) {
     await service.issueRefreshToken('u1', res);
-    return (res.cookie.mock.calls[0] as [string, string])[1];
+    return (cookie.mock.calls[0] as [string, string])[1];
   }
 
   it('rotates a known token and returns a new access token', async () => {
-    const { service, res } = setup();
-    const token = await issuedToken(service, res);
-    res.cookie.mockClear();
+    const { service, res, cookie } = setup();
+    const token = await issuedToken(service, res, cookie);
+    cookie.mockClear();
 
     const access = await service.rotate(reqWithCookie(token), res);
 
     expect(service.verifyAccessToken(access)).toBe('u1');
-    expect(res.cookie).toHaveBeenCalledTimes(1); // new refresh cookie
+    expect(cookie).toHaveBeenCalledTimes(1); // new refresh cookie
   });
 
   it('treats a replayed token as theft: revokes every session of the user', async () => {
-    const { service, db, res } = setup();
-    const token = await issuedToken(service, res);
+    const { service, db, res, cookie, clearCookie } = setup();
+    const token = await issuedToken(service, res, cookie);
     db.refreshToken.deleteMany.mockResolvedValueOnce({ count: 0 }); // already used
 
     await expect(
@@ -117,7 +116,7 @@ describe('TokenService refresh tokens', () => {
     expect(db.refreshToken.deleteMany).toHaveBeenLastCalledWith({
       where: { userId: 'u1' },
     });
-    expect(res.clearCookie).toHaveBeenCalled();
+    expect(clearCookie).toHaveBeenCalled();
   });
 
   it('rejects a missing or forged cookie', async () => {
