@@ -1,4 +1,3 @@
-// GENERATED from /contracts/src by contracts/sync.mjs. Do not edit here.
 import { z } from 'zod';
 
 export const createClubSchema = z.object({
