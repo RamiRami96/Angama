@@ -62,14 +62,14 @@
 ```
 Angama/
 ├── client/                  # Expo / React Native app
-│   ├── app/                   # expo-router routes: thin re-exports of _pages
+│   ├── app/                   # expo-router routes: thin re-exports of _pages (screens) and _app (layouts)
 │   └── src/                   # Feature-Sliced Design layers (top to bottom)
 │       ├── _app/              # App-wide setup: providers, root layout wiring
 │       ├── _pages/            # One slice per screen, composes widgets/features
 │       ├── widgets/           # Large self-contained UI blocks
 │       ├── features/          # User actions (sign-in, sign-up, create/delete club, apply, ...)
 │       ├── entities/          # Business entities (models, API, queries, UI)
-│       └── shared/            # Reusable UI kit (ui), API client (api), helpers/constants (lib)
+│       └── shared/            # Reusable UI kit (ui), API client (api), helpers (lib); imported per segment, e.g. @/shared/ui
 │
 └── server/                  # NestJS API
     ├── prisma/                # Prisma schema (User, Club, Registration)
