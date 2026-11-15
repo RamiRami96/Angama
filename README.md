@@ -20,9 +20,8 @@
 ## ✨ Features
 
 ### 🔐 **Secure Authentication**
-- Cookie-based session authentication
+- JWT authentication: short-lived access token (kept on the device) + rotating refresh token in an HttpOnly, Secure, SameSite cookie
 - Account deletion support
-- Bearer-token compatibility shim for native clients
 
 ### 🏛️ **Browse Speaking Clubs**
 - Searchable list of active clubs
@@ -55,7 +54,7 @@
 | **NestJS** | Full-stack API framework | 11 |
 | **Prisma ORM** | Type-safe database access | 6.19 |
 | **PostgreSQL** | Primary database | - |
-| **express-session + bcrypt** | Session auth & password hashing | - |
+| **@nestjs/jwt + bcrypt** | JWT auth & password hashing | - |
 
 ## 📁 Project Structure
 
@@ -75,7 +74,7 @@ Angama/
     ├── prisma/                # Prisma schema (User, Club, Registration)
     └── src/
         ├── api/
-        │   ├── auth/            # Sign up / sign in / sign out / session guard
+        │   ├── auth/            # Sign up / sign in / sign out / refresh / JWT guard
         │   ├── clubs/           # Club CRUD, registrations
         │   └── users/           # User profile endpoints
         ├── prisma/               # Prisma service/module
@@ -116,7 +115,12 @@ Create a `.env` file in the `server/` directory:
 ```env
 DATABASE_URL="postgresql://username:password@localhost:5432/angama"
 DIRECT_URL="postgresql://username:password@localhost:5432/angama"
-SESSION_SECRET="your-secret-key"
+JWT_ACCESS_SECRET="long-random-string"
+JWT_REFRESH_SECRET="another-long-random-string"
+# Optional: COOKIE_SAMESITE=lax|strict|none (default lax). The refresh cookie is
+# Secure only when NODE_ENV=production.
+# Production only: CORS_ORIGINS="https://your-web-app.com" (comma-separated).
+# Native apps don't need CORS; dev allows any origin.
 ```
 
 ### 4. Database Setup
@@ -142,7 +146,7 @@ Open the app in a development build, simulator, or Expo Go.
 
 ### Creating an Account
 1. Sign up with your details
-2. Sign in using cookie-based sessions
+2. Sign in; the app keeps the access token and refreshes it automatically
 
 ### Finding a Club
 1. Browse the searchable list of active speaking clubs

@@ -1,2 +1,2 @@
-export { API, getSid, storeSid, clearSid, request } from "./client";
+export { API, getAccessToken, setAccessToken, clearAccessToken, request } from "./client";
 export { queryKeys } from "./query-keys";

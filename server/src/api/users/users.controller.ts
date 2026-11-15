@@ -34,7 +34,7 @@ export class UsersController {
   }
 
   private requireUser(req: Request): string {
-    const id = req.session.userId;
+    const id = req.userId;
     if (!id) throw new UnauthorizedException();
     return id;
   }

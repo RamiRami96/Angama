@@ -1,35 +1,34 @@
 import { NestFactory } from '@nestjs/core';
+import cookieParser from 'cookie-parser';
 import type { NextFunction, Request, Response } from 'express';
-import session from 'express-session';
 import { AppModule } from './app.module';
+import { TokenService } from './api/auth/token.service';
 
 async function bootstrap() {
+  for (const name of ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET']) {
+    if (!process.env[name]) throw new Error(`${name} is not set`);
+  }
+
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: true,
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? (process.env.CORS_ORIGINS?.split(',') ?? false)
+        : true,
     credentials: true,
   });
 
+  app.use(cookieParser());
+
+  const tokens = app.get(TokenService);
   app.use((req: Request, _res: Response, next: NextFunction) => {
     const auth = req.headers.authorization;
     if (auth?.startsWith('Bearer ')) {
-      req.headers.cookie = `connect.sid=${encodeURIComponent(auth.slice(7))}`;
+      req.userId = tokens.verifyAccessToken(auth.slice(7));
     }
     next();
   });
-
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET ?? 'angama-secret',
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      },
-    }),
-  );
 
   await app.listen(process.env.PORT ?? 3000);
 }

@@ -88,7 +88,7 @@ export class ClubsController {
   }
 
   private userId(req: Request): string | undefined {
-    return req.session.userId;
+    return req.userId;
   }
 
   private requireUser(req: Request): string {
