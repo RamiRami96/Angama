@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './api/auth/auth.module';
 import { CatalogModule } from './api/catalog/catalog.module';
 import { EventsModule } from './api/events/events.module';
+import { NotificationsModule } from './api/notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './api/users/users.module';
 import { parseEnv } from './config/env';
@@ -23,6 +24,7 @@ import { AllExceptionsFilter } from './shared/filter/all-exceptions.filter';
     EventsModule,
     CatalogModule,
     UsersModule,
+    NotificationsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
