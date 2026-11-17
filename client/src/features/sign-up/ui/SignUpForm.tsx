@@ -22,6 +22,7 @@ export function SignUpForm() {
       email: "",
       password: "",
       dateOfBirth: "",
+      city: "",
     },
   });
 
@@ -39,6 +40,7 @@ export function SignUpForm() {
         "email",
         "password",
         "dateOfBirth",
+        "city",
       ] as const);
       for (const [name, message] of Object.entries(fields)) {
         setError(name as keyof SignUpFormData, { message });

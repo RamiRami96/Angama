@@ -1,4 +1,4 @@
-import { Text, TextInput, View } from "react-native";
+import { Text, TextInput, TextInputProps, View } from "react-native";
 
 type Props = {
   label: string;
@@ -7,10 +7,12 @@ type Props = {
   placeholder?: string;
   multiline?: boolean;
   keyboardType?: "default" | "numeric";
+  autoCapitalize?: TextInputProps["autoCapitalize"];
+  maxLength?: number;
   error?: string;
 };
 
-export function Field({ label, value, onChange, placeholder, multiline, keyboardType, error }: Props) {
+export function Field({ label, value, onChange, placeholder, multiline, keyboardType, autoCapitalize, maxLength, error }: Props) {
   return (
     <View style={{ gap: 6 }}>
       <Text className="text-white/70 text-xs font-semibold uppercase tracking-widest">{label}</Text>
@@ -25,6 +27,8 @@ export function Field({ label, value, onChange, placeholder, multiline, keyboard
           placeholderTextColor="rgba(255,255,255,0.35)"
           multiline={multiline}
           keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          maxLength={maxLength}
           className="text-white text-sm"
           style={{ paddingVertical: 12, textAlignVertical: multiline ? "top" : "center" }}
         />

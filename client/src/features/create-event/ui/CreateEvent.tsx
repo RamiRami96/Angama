@@ -2,11 +2,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { BrandGradient, GradientButton } from "@/shared/ui";
+import { BrandGradient, Field, GradientButton } from "@/shared/ui";
 import { CreateEventErrors, CreateEventFields } from "../model/create-event.model";
 
 import { DateTimePickerField } from "./DateTimePickerField";
-import { Field } from "./Field";
 
 type Props = {
   fields: CreateEventFields;

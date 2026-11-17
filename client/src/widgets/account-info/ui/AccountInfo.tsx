@@ -16,6 +16,7 @@ export function AccountInfo({ user }: Props) {
       </Text>
       <Row icon="person-outline" label="Full Name" value={user?.name} />
       <Row icon="mail-outline" label="Email" value={user?.email} />
+      <Row icon="location-outline" label="City" value={user?.city} />
       <Row icon="calendar-outline" label="Date of Birth" value={user?.dateOfBirth} />
     </View>
   );

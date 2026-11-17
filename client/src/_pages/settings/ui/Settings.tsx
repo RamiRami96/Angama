@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -20,6 +21,7 @@ export function Settings({
   onDeleteAccount,
 }: SettingsProps) {
   const { top } = useSafeAreaInsets();
+  const router = useRouter();
 
   return (
     <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
@@ -38,6 +40,15 @@ export function Settings({
       <AccountInfo user={user} />
 
       <View className="mx-4 mb-8 gap-3">
+        <Pressable
+          onPress={() => router.push("/profile/edit")}
+          disabled={isLoading}
+          className="flex-row items-center justify-center gap-2 bg-white/20 rounded-2xl py-4 active:opacity-70"
+        >
+          <Ionicons name="create-outline" size={20} color="#fff" />
+          <Text className="text-white font-semibold text-base">Edit Profile</Text>
+        </Pressable>
+
         <Pressable
           onPress={onSignOut}
           disabled={isLoading}

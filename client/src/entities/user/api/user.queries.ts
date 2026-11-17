@@ -10,3 +10,10 @@ export function useCurrentUserQuery() {
     queryFn: userService.getCurrentUser,
   });
 }
+
+export function useUserPreferencesQuery() {
+  return useQuery({
+    queryKey: queryKeys.users.preferences,
+    queryFn: userService.getPreferences,
+  });
+}
