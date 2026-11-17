@@ -8,7 +8,7 @@ CREATE TYPE "LanguageLevel" AS ENUM ('A1', 'A2', 'B1', 'B2', 'C1', 'C2');
 CREATE TYPE "EventStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'CANCELLED', 'COMPLETED');
 
 -- CreateEnum
-CREATE TYPE "ParticipationStatus" AS ENUM ('REQUESTED', 'APPROVED', 'REJECTED', 'WAITLISTED', 'CANCELLED', 'ATTENDED');
+CREATE TYPE "ParticipationStatus" AS ENUM ('REQUESTED', 'APPROVED', 'REJECTED', 'CANCELLED', 'ATTENDED', 'NO_SHOW');
 
 -- CreateEnum
 CREATE TYPE "NotificationType" AS ENUM ('PARTICIPATION_REQUESTED', 'PARTICIPATION_APPROVED', 'PARTICIPATION_REJECTED', 'EVENT_CANCELLED');
@@ -170,6 +170,12 @@ CREATE UNIQUE INDEX "EventParticipant_userId_eventId_key" ON "EventParticipant"(
 
 -- CreateIndex
 CREATE INDEX "Notification_userId_readAt_idx" ON "Notification"("userId", "readAt");
+
+-- CreateIndex
+CREATE INDEX "Notification_eventId_idx" ON "Notification"("eventId");
+
+-- CreateIndex
+CREATE INDEX "Notification_actorId_idx" ON "Notification"("actorId");
 
 -- AddForeignKey
 ALTER TABLE "RefreshToken" ADD CONSTRAINT "RefreshToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

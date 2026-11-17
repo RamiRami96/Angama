@@ -1,7 +1,8 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../generated/prisma"
-  moduleFormat = "cjs"
+  provider            = "prisma-client"
+  output              = "../generated/prisma"
+  moduleFormat        = "cjs"
+  importFileExtension = ""
 }
 
 datasource db {
@@ -146,9 +147,9 @@ enum ParticipationStatus {
   REQUESTED
   APPROVED
   REJECTED
-  WAITLISTED
   CANCELLED
   ATTENDED
+  NO_SHOW
 }
 
 model EventParticipant {
@@ -187,4 +188,6 @@ model Notification {
   actor   User?   @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([userId, readAt])
+  @@index([eventId])
+  @@index([actorId])
 }

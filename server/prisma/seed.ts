@@ -1,30 +1,5 @@
 import 'dotenv/config';
-import Module from 'node:module';
-import type { PrismaClient as PrismaClientType } from '../generated/prisma/client';
-
-// The generated client is emitted as TypeScript with `./x.js` import specifiers
-// (ESM-style). ts-node's CJS loader cannot map those to the `.ts` sources, so
-// retry relative `.js` requests as `.ts` before loading the client.
-const m = Module as unknown as {
-  _resolveFilename: (request: string, ...rest: unknown[]) => string;
-};
-const originalResolve = m._resolveFilename;
-m._resolveFilename = function (request: string, ...rest: unknown[]) {
-  try {
-    return originalResolve.call(this, request, ...rest);
-  } catch (err) {
-    if (request.startsWith('.') && request.endsWith('.js')) {
-      return originalResolve.call(this, request.replace(/\.js$/, '.ts'), ...rest);
-    }
-    throw err;
-  }
-};
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { PrismaClient, PreferenceType } = require('../generated/prisma/client') as {
-  PrismaClient: typeof PrismaClientType;
-  PreferenceType: typeof import('../generated/prisma/client').PreferenceType;
-};
+import { PrismaClient, PreferenceType } from '../generated/prisma/client';
 
 const prisma = new PrismaClient({
   datasources: {
