@@ -1,4 +1,5 @@
 export { BrandGradient } from "./BrandGradient";
+export { Chip } from "./Chip";
 export { ConfirmModal } from "./ConfirmModal";
 export { DatePickerInput } from "./DatePickerInput";
 export { Field } from "./Field";

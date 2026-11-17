@@ -1,14 +1,18 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { queryKeys } from "@/shared/api";
 
 import { Event } from "../model/event.model";
-import { eventsService } from "./event.service";
+import { eventsService, normalizeEventFilters, type EventFilters } from "./event.service";
 
-export function useEventsQuery() {
+export function useEventsQuery(filters: EventFilters = {}) {
+  // Key and URL come from the same normalized filters.
+  const normalized = normalizeEventFilters(filters);
   return useQuery({
-    queryKey: queryKeys.events.list(),
-    queryFn: eventsService.getAll,
+    queryKey: queryKeys.events.list(normalized),
+    queryFn: () => eventsService.getAll(normalized),
+    // Keep showing the previous results while a new filter combination loads.
+    placeholderData: keepPreviousData,
   });
 }
 

@@ -1,11 +1,17 @@
-import { useEventsQuery, type Event } from "@/entities/event";
+import { useEventsQuery, type Event, type EventFilters } from "@/entities/event";
 
-// Stable reference, so memoized consumers (search) don't recompute while loading.
+// Stable reference for the empty state while loading.
 const NO_EVENTS: Event[] = [];
 
-export function useEvents() {
-  const { data, isRefetching, refetch } = useEventsQuery();
+export function useEvents(filters: EventFilters) {
+  const { data, isLoading, isRefetching, isPlaceholderData, refetch } = useEventsQuery(filters);
 
-  // The server returns only upcoming published events (plus the viewer's drafts).
-  return { events: data ?? NO_EVENTS, isRefetching, refetch };
+  // The server returns only upcoming published events matching the filters.
+  return {
+    events: data ?? NO_EVENTS,
+    isLoading,
+    // A filter change shows the previous results as placeholder; not a pull-to-refresh.
+    isRefetching: isRefetching && !isPlaceholderData,
+    refetch,
+  };
 }

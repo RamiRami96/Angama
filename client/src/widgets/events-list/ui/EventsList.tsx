@@ -1,25 +1,22 @@
 import { useRouter } from "expo-router";
-import { Events } from "./Events";
+
+import { useEventFilters } from "../model/useEventFilters";
 import { useEvents } from "../model/useEvents";
-import { useEventSearch } from "../model/useEventSearch";
+
+import { Events } from "./Events";
 
 export function EventsList() {
   const router = useRouter();
-  const { events, isRefetching, refetch } = useEvents();
-
-  const { searchQuery, setSearchQuery, filteredEvents } = useEventSearch(events);
-
-  const handleCreateEvent = () => router.push("/events/create");
-
-  const handlePressEvent = (id: string) => router.push(`/events/${id}`);
+  const filters = useEventFilters();
+  const { events, isLoading, isRefetching, refetch } = useEvents(filters.filters);
 
   return (
     <Events
-      events={filteredEvents}
-      searchQuery={searchQuery}
-      onSearchChange={setSearchQuery}
-      onPressEvent={handlePressEvent}
-      onCreateEvent={handleCreateEvent}
+      events={events}
+      filters={filters}
+      loading={isLoading}
+      onPressEvent={(id) => router.push(`/events/${id}`)}
+      onCreateEvent={() => router.push("/events/create")}
       refreshing={isRefetching}
       onRefresh={refetch}
     />

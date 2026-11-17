@@ -14,6 +14,8 @@ export const queryKeys = {
   },
   users: {
     preferences: ["users", "me", "preferences"] as const,
+    /** Prefix of both `myEvents(role)` keys. */
+    myEventsAll: ["users", "me", "events"] as const,
     myEvents: (role: MyEventsQuery["role"]) => ["users", "me", "events", role] as const,
   },
   notifications: {

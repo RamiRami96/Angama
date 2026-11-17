@@ -2,10 +2,9 @@ import { Text, View } from "react-native";
 
 import type { Catalog } from "@/entities/catalog";
 import { LANGUAGE_LEVELS, type LanguageLevel } from "@/shared/contracts";
-import { GradientButton } from "@/shared/ui";
+import { Chip, GradientButton } from "@/shared/ui";
 
 import type { LanguageEntry } from "../model/languages";
-import { Chip } from "./Chip";
 
 type Props = {
   catalog: Catalog;
