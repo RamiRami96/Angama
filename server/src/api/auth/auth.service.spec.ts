@@ -21,6 +21,8 @@ describe('AuthService.signIn', () => {
     email: 'a@b.c',
     password,
     dateOfBirth: new Date('2000-01-01'),
+    city: 'Berlin',
+    about: null,
     avatarUrl: null,
     createdAt: new Date(),
   });
@@ -61,6 +63,7 @@ describe('AuthService.signUp', () => {
     email: 'b@b.co',
     password: 'password1',
     dateOfBirth: '2000-01-02',
+    city: 'Berlin',
   };
 
   it('rejects an email that is already registered', async () => {
@@ -82,6 +85,7 @@ describe('AuthService.signUp', () => {
         create: jest.fn().mockImplementation(({ data }: { data: object }) => ({
           id: 'u1',
           avatarUrl: null,
+          about: null,
           createdAt: new Date(),
           ...data,
         })),
@@ -98,5 +102,28 @@ describe('AuthService.signUp', () => {
     expect(data.password).toMatch(/^\$2[aby]\$10\$/);
     expect(user).not.toHaveProperty('password');
     expect(user.dateOfBirth).toBe('2000-01-02');
+  });
+
+  it('persists the city and returns it with a null about', async () => {
+    const db = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockImplementation(({ data }: { data: object }) => ({
+          id: 'u1',
+          avatarUrl: null,
+          about: null,
+          createdAt: new Date(),
+          ...data,
+        })),
+      },
+    };
+    const service = new AuthService(db as unknown as PrismaService);
+
+    const user = await service.signUp(dto);
+
+    expect(db.user.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ city: 'Berlin' }) as object,
+    });
+    expect(user).toMatchObject({ city: 'Berlin', about: null });
   });
 });

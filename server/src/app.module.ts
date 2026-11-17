@@ -3,6 +3,7 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './api/auth/auth.module';
+import { CatalogModule } from './api/catalog/catalog.module';
 import { ClubsModule } from './api/clubs/clubs.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './api/users/users.module';
@@ -20,6 +21,7 @@ import { AllExceptionsFilter } from './shared/filter/all-exceptions.filter';
     PrismaModule,
     AuthModule,
     ClubsModule,
+    CatalogModule,
     UsersModule,
   ],
   providers: [
