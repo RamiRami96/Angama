@@ -36,7 +36,7 @@ export function Start({ onGetStarted, onSignIn, logoStyle, titleStyle, descStyle
 
         <Animated.View style={titleStyle} className="items-center gap-2">
           <Text className="text-white/80 text-base text-center">
-            Hi there! We&apos;re here to help you{"\n"}find and join speaking clubs.
+            Hi there! We&apos;re here to help you{"\n"}find and join international events.
           </Text>
         </Animated.View>
 

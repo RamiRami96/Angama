@@ -163,18 +163,18 @@ Prisma entities:
 
 - You cannot join your own event (403).
 - One participation row per user and event: requesting again is rejected (409), including after cancelling or being rejected.
-- Only `PUBLISHED` events that have not started accept requests; full, cancelled, completed and draft events are closed (409).
+- Only `PUBLISHED` events that have not started accept requests; full, cancelled and completed events are closed (409). Someone else's draft is reported as not found (404).
 - Capacity is counted on confirmed participations and enforced under a row lock on the event, so concurrent approvals and edits cannot overbook it. `maxParticipants` cannot be lowered below the confirmed count.
 - Approval is the confirmation: a `REQUESTED` participation becomes `APPROVED` and takes a spot. Approving or rejecting twice is idempotent.
 - The organizer can decide on pending requests until the event ends.
 - Cancelling an event notifies everyone with a `REQUESTED` or `APPROVED` participation.
 - Cancelled and completed events cannot be edited, published or cancelled again (409).
-- `COMPLETED` is applied lazily: published events whose end time has passed are marked completed when the event list is read.
+- `COMPLETED` is applied lazily: published events whose end time has passed are marked completed on event list reads, My Events and event detail reads. Editing, publishing or cancelling an event whose end time has passed is rejected (409) even before it is marked completed.
 
 ## 🛠️ Getting Started
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20+
 - A PostgreSQL database
 - [Expo Go](https://expo.dev/go) or an iOS/Android simulator
 
@@ -262,6 +262,7 @@ cd client && npm test
 - **Speaking-club level cannot be cleared** once set (an edit can change it, not remove it).
 - **Date filter is a UTC day**: `date=YYYY-MM-DD` matches events starting within that UTC day, regardless of the event's city time zone.
 - Event lists are capped at 100 results (no paging yet).
+- **Deleting an account deletes the events it organized** (participants are not notified).
 
 ## 🎯 Future Plans
 

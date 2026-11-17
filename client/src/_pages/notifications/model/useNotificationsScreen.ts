@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useRef } from "react";
 
@@ -8,10 +9,13 @@ import {
 } from "@/features/mark-notification-read";
 import { usePullToRefresh } from "@/shared/lib";
 
+import { refreshNotificationEvent } from "./refresh-notification-event";
+
 const NO_NOTIFICATIONS: Notification[] = [];
 
 export function useNotificationsScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data, isLoading, refetch } = useNotifications();
   const markRead = useMarkNotificationReadMutation();
   const markAllRead = useMarkAllNotificationsReadMutation();
@@ -36,6 +40,7 @@ export function useNotificationsScreen() {
     ...pull,
     onPressNotification: (n: Notification) => {
       if (!n.read) markRead.mutate(n.id);
+      refreshNotificationEvent(queryClient, n.eventId);
       router.push(notificationHref(n));
     },
     onMarkAllRead: () => markAllRead.mutate(),

@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import type { Event } from "@/entities/event";
 import { GradientButton } from "@/shared/ui";
 
-import type { EventAction } from "../model/event-status";
+import { getClosedLabel, type EventAction } from "../model/event-status";
 
 type Props = {
   event: Event;
@@ -145,7 +145,7 @@ export function EventActions({
       return <DisabledPill label="Event is full" icon="people-outline" />;
     case "closed":
       return (
-        <DisabledPill label={event.status === "CANCELLED" ? "Event cancelled" : "Event completed"} />
+        <DisabledPill label={getClosedLabel(event)} />
       );
     case "none": {
       const label = event.myParticipation ? NONE_LABEL[event.myParticipation] : undefined;
