@@ -15,12 +15,18 @@ model User {
   email       String   @unique
   password    String
   dateOfBirth DateTime
+  city        String
+  about       String?
   avatarUrl   String?
   createdAt   DateTime @default(now())
 
-  hostedClubs   Club[]
-  registrations Registration[]
-  refreshTokens RefreshToken[]
+  organizedEvents    Event[]
+  participations     EventParticipant[]
+  preferences        UserPreference[]
+  languages          UserLanguage[]
+  notifications      Notification[]     @relation("NotificationRecipient")
+  actedNotifications Notification[]     @relation("NotificationActor")
+  refreshTokens      RefreshToken[]
 }
 
 model RefreshToken {
@@ -35,54 +41,150 @@ model RefreshToken {
   @@index([userId])
 }
 
-model Club {
-  id          String     @id @default(uuid())
-  name        String
-  description String
-  location    String
-  maxMembers  Int
-  status      ClubStatus @default(ACTIVE)
-  startDate   DateTime
-  endDate     DateTime?
-  createdAt   DateTime   @default(now())
-
-  hostId        String
-  host          User           @relation(fields: [hostId], references: [id], onDelete: Cascade)
-  registrations Registration[]
-
-  @@index([hostId])
-  @@index([startDate])
+enum PreferenceType {
+  GOAL
+  INTEREST
 }
 
-model Registration {
-  id           String             @id @default(uuid())
-  role         RegistrationRole
-  status       RegistrationStatus @default(PENDING)
-  registeredAt DateTime           @default(now())
+model Preference {
+  id    String         @id @default(uuid())
+  type  PreferenceType
+  code  String
+  label String
 
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  clubId String
-  club   Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  users UserPreference[]
 
-  @@unique([userId, clubId])
-  @@index([clubId])
+  @@unique([type, code])
 }
 
-enum ClubStatus {
-  ACTIVE
+model UserPreference {
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferenceId String
+  preference   Preference @relation(fields: [preferenceId], references: [id], onDelete: Cascade)
+
+  @@id([userId, preferenceId])
+}
+
+model Language {
+  id   String @id @default(uuid())
+  code String @unique
+  name String
+
+  users  UserLanguage[]
+  events Event[]
+}
+
+enum LanguageLevel {
+  A1
+  A2
+  B1
+  B2
+  C1
+  C2
+}
+
+model UserLanguage {
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  languageId String
+  language   Language      @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  level      LanguageLevel
+
+  @@id([userId, languageId])
+}
+
+model EventCategory {
+  id   String @id @default(uuid())
+  code String @unique
+  name String
+
+  events Event[]
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
   CANCELLED
+  COMPLETED
 }
 
-enum RegistrationRole {
-  SPEAKER
-  LISTENER
+model Event {
+  id              String      @id @default(uuid())
+  name            String
+  description     String
+  details         Json        @default("{}")
+  coverImageUrl   String?
+  startsAt        DateTime
+  endsAt          DateTime
+  city            String
+  address         String
+  maxParticipants Int
+  price           Decimal?    @db.Decimal(10, 2)
+  status          EventStatus @default(DRAFT)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  categoryId  String
+  category    EventCategory @relation(fields: [categoryId], references: [id])
+  languageId  String
+  language    Language      @relation(fields: [languageId], references: [id])
+  organizerId String
+  organizer   User          @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+
+  participants  EventParticipant[]
+  notifications Notification[]
+
+  @@index([organizerId])
+  @@index([status, startsAt])
+  @@index([city])
+  @@index([categoryId])
+  @@index([languageId])
 }
 
-enum RegistrationStatus {
-  PENDING
+enum ParticipationStatus {
+  REQUESTED
   APPROVED
   REJECTED
   WAITLISTED
   CANCELLED
+  ATTENDED
+}
+
+model EventParticipant {
+  id        String              @id @default(uuid())
+  status    ParticipationStatus @default(REQUESTED)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([eventId, status])
+}
+
+enum NotificationType {
+  PARTICIPATION_REQUESTED
+  PARTICIPATION_APPROVED
+  PARTICIPATION_REJECTED
+  EVENT_CANCELLED
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  userId  String
+  user    User    @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  eventId String
+  event   Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  actorId String?
+  actor   User?   @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, readAt])
 }
