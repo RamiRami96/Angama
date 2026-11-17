@@ -1,6 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
 import type { PrismaService } from '../../prisma/prisma.service';
+import type { EventsService } from '../events/events.service';
 import { UsersService } from './users.service';
+
+const noEvents = {
+  completeFinished: jest.fn(),
+} as unknown as EventsService;
 
 describe('UsersService.updateProfile', () => {
   const user = {
@@ -17,9 +22,12 @@ describe('UsersService.updateProfile', () => {
 
   it('returns the public user shape and never the password', async () => {
     const update = jest.fn().mockResolvedValue(user);
-    const service = new UsersService({
-      user: { update },
-    } as unknown as PrismaService);
+    const service = new UsersService(
+      {
+        user: { update },
+      } as unknown as PrismaService,
+      noEvents,
+    );
 
     const result = await service.updateProfile('u1', { name: 'Bob' });
 
@@ -42,9 +50,12 @@ describe('UsersService.updateProfile', () => {
 
   it('passes null through so the avatar can be removed', async () => {
     const update = jest.fn().mockResolvedValue(user);
-    const service = new UsersService({
-      user: { update },
-    } as unknown as PrismaService);
+    const service = new UsersService(
+      {
+        user: { update },
+      } as unknown as PrismaService,
+      noEvents,
+    );
     await service.updateProfile('u1', { avatarUrl: null });
     expect(update).toHaveBeenCalledWith({
       where: { id: 'u1' },
@@ -56,9 +67,12 @@ describe('UsersService.updateProfile', () => {
     const update = jest
       .fn()
       .mockResolvedValue({ ...user, city: 'Paris', about: 'Hi' });
-    const service = new UsersService({
-      user: { update },
-    } as unknown as PrismaService);
+    const service = new UsersService(
+      {
+        user: { update },
+      } as unknown as PrismaService,
+      noEvents,
+    );
 
     const result = await service.updateProfile('u1', {
       city: 'Paris',
@@ -115,7 +129,7 @@ describe('UsersService preferences and languages', () => {
         return Promise.all(ops);
       }),
     };
-    const service = new UsersService(db as unknown as PrismaService);
+    const service = new UsersService(db as unknown as PrismaService, noEvents);
     return { db, service, calls };
   }
 
@@ -253,5 +267,117 @@ describe('UsersService preferences and languages', () => {
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(db.$transaction).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('UsersService.getMyEvents', () => {
+  const start = new Date('2030-01-01T10:00:00Z');
+  function eventRow(id: string, participants: object[] = []) {
+    return {
+      id,
+      name: id,
+      description: '',
+      details: {},
+      coverImageUrl: null,
+      startsAt: start,
+      endsAt: new Date('2030-01-01T12:00:00Z'),
+      city: 'Berlin',
+      address: 'Main St 1',
+      maxParticipants: 5,
+      price: null,
+      status: 'DRAFT',
+      createdAt: start,
+      organizer: { id: 'u1', name: 'O', avatarUrl: null },
+      category: { code: 'BOARD_GAMES', name: 'Board games' },
+      language: { code: 'en', name: 'English' },
+      participants,
+    };
+  }
+
+  function setup() {
+    const db = {
+      event: { findMany: jest.fn() },
+      eventParticipant: { findMany: jest.fn(), groupBy: jest.fn() },
+    };
+    const events = { completeFinished: jest.fn().mockResolvedValue(undefined) };
+    const service = new UsersService(
+      db as unknown as PrismaService,
+      events as unknown as EventsService,
+    );
+    return { db, events, service };
+  }
+
+  it('organizer: lists own events with grouped confirmed/pending counts', async () => {
+    const { db, events, service } = setup();
+    db.event.findMany.mockResolvedValue([eventRow('e1'), eventRow('e2')]);
+    db.eventParticipant.groupBy.mockResolvedValue([
+      { eventId: 'e1', status: 'REQUESTED', _count: 2 },
+      { eventId: 'e1', status: 'APPROVED', _count: 3 },
+      { eventId: 'e1', status: 'ATTENDED', _count: 1 },
+      { eventId: 'e1', status: 'REJECTED', _count: 4 },
+    ]);
+
+    const result = await service.getMyEvents('u1', 'organizer');
+
+    expect(events.completeFinished).toHaveBeenCalledTimes(1);
+    expect(db.event.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { organizerId: 'u1' },
+        orderBy: { startsAt: 'desc' },
+      }),
+    );
+    expect(db.eventParticipant.groupBy).toHaveBeenCalledTimes(1);
+    expect(db.eventParticipant.groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        by: ['eventId', 'status'],
+        where: { eventId: { in: ['e1', 'e2'] } },
+      }),
+    );
+    expect(result).toHaveLength(2);
+    expect(result[0]).toMatchObject({
+      event: { id: 'e1', status: 'DRAFT' },
+      participantCount: 4,
+      pendingCount: 2,
+    });
+    expect(result[1]).toMatchObject({ participantCount: 0, pendingCount: 0 });
+  });
+
+  it('organizer: skips the count query when there are no events', async () => {
+    const { db, service } = setup();
+    db.event.findMany.mockResolvedValue([]);
+    expect(await service.getMyEvents('u1', 'organizer')).toEqual([]);
+    expect(db.eventParticipant.groupBy).not.toHaveBeenCalled();
+  });
+
+  it('participant: returns the participation status per row, newest first', async () => {
+    const { db, events, service } = setup();
+    db.eventParticipant.findMany.mockResolvedValue([
+      {
+        status: 'REJECTED',
+        event: eventRow('e1'),
+      },
+      {
+        status: 'APPROVED',
+        event: eventRow('e2', [{ userId: 'u1', status: 'APPROVED' }]),
+      },
+    ]);
+
+    const result = await service.getMyEvents('u1', 'participant');
+
+    expect(events.completeFinished).toHaveBeenCalledTimes(1);
+    expect(db.eventParticipant.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: 'u1' },
+        orderBy: { createdAt: 'desc' },
+      }),
+    );
+    expect(result.map((r) => r.participationStatus)).toEqual([
+      'REJECTED',
+      'APPROVED',
+    ]);
+    expect(result.map((r) => r.event.myParticipation)).toEqual([
+      'REJECTED',
+      'APPROVED',
+    ]);
   });
 });

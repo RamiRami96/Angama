@@ -1,12 +1,32 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { toPublicUser } from '../../shared/mapper/user.mapper';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ParticipationStatus } from '../../../generated/prisma/enums';
+import {
+  CONFIRMED_STATUSES,
+  EVENT_INCLUDE,
+  toEventDto,
+  type EventDto,
+} from '../events/events.mapper';
+import { EventsService } from '../events/events.service';
 import type {
   LanguageLevel,
+  MyEventsQuery,
   UpdateLanguagesDto,
   UpdatePreferencesDto,
   UpdateProfileDto,
 } from '../../contracts';
+
+export interface OrganizedEventItem {
+  event: EventDto;
+  participantCount: number;
+  pendingCount: number;
+}
+
+export interface JoinedEventItem {
+  event: EventDto;
+  participationStatus: ParticipationStatus;
+}
 
 export interface UserPreferences {
   goals: string[];
@@ -16,7 +36,10 @@ export interface UserPreferences {
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private events: EventsService,
+  ) {}
 
   async updateProfile(userId: string, data: UpdateProfileDto) {
     const user = await this.prisma.user.update({
@@ -107,5 +130,71 @@ export class UsersService {
     ]);
 
     return this.getPreferences(userId);
+  }
+
+  async getMyEvents(
+    userId: string,
+    role: 'organizer',
+  ): Promise<OrganizedEventItem[]>;
+  async getMyEvents(
+    userId: string,
+    role: 'participant',
+  ): Promise<JoinedEventItem[]>;
+  async getMyEvents(
+    userId: string,
+    role: MyEventsQuery['role'],
+  ): Promise<OrganizedEventItem[] | JoinedEventItem[]>;
+  async getMyEvents(
+    userId: string,
+    role: MyEventsQuery['role'],
+  ): Promise<OrganizedEventItem[] | JoinedEventItem[]> {
+    await this.events.completeFinished();
+    return role === 'organizer'
+      ? this.getOrganizedEvents(userId)
+      : this.getJoinedEvents(userId);
+  }
+
+  private async getOrganizedEvents(
+    userId: string,
+  ): Promise<OrganizedEventItem[]> {
+    const rows = await this.prisma.event.findMany({
+      where: { organizerId: userId },
+      include: EVENT_INCLUDE,
+      orderBy: { startsAt: 'desc' },
+    });
+    if (!rows.length) return [];
+
+    const groups = await this.prisma.eventParticipant.groupBy({
+      by: ['eventId', 'status'],
+      where: { eventId: { in: rows.map((r) => r.id) } },
+      _count: true,
+    });
+    const confirmed = new Map<string, number>();
+    const pending = new Map<string, number>();
+    for (const g of groups) {
+      if (CONFIRMED_STATUSES.includes(g.status)) {
+        confirmed.set(g.eventId, (confirmed.get(g.eventId) ?? 0) + g._count);
+      } else if (g.status === ParticipationStatus.REQUESTED) {
+        pending.set(g.eventId, g._count);
+      }
+    }
+
+    return rows.map((r) => ({
+      event: toEventDto(r, userId),
+      participantCount: confirmed.get(r.id) ?? 0,
+      pendingCount: pending.get(r.id) ?? 0,
+    }));
+  }
+
+  private async getJoinedEvents(userId: string): Promise<JoinedEventItem[]> {
+    const rows = await this.prisma.eventParticipant.findMany({
+      where: { userId },
+      include: { event: { include: EVENT_INCLUDE } },
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((r) => ({
+      event: toEventDto(r.event, userId, r.status),
+      participationStatus: r.status,
+    }));
   }
 }

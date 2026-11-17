@@ -1,10 +1,20 @@
-import { Body, Controller, Get, HttpCode, Patch, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Patch,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../shared/pipe/zod-validation.pipe';
 import {
+  myEventsQuerySchema,
   updateLanguagesSchema,
   updatePreferencesSchema,
   updateProfileSchema,
+  type MyEventsQuery,
   type UpdateLanguagesDto,
   type UpdatePreferencesDto,
   type UpdateProfileDto,
@@ -45,5 +55,13 @@ export class UsersController {
     @CurrentUser() userId: string,
   ) {
     return this.users.setLanguages(userId, body);
+  }
+
+  @Get('me/events')
+  getMyEvents(
+    @Query(new ZodValidationPipe(myEventsQuerySchema)) query: MyEventsQuery,
+    @CurrentUser() userId: string,
+  ) {
+    return this.users.getMyEvents(userId, query.role);
   }
 }
