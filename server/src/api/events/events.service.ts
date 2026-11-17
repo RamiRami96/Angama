@@ -275,8 +275,12 @@ export class EventsService {
     return event;
   }
 
-  /** Takes the event row lock, then re-reads the event under it. */
-  private async lockEvent(tx: Prisma.TransactionClient, id: string) {
+  /**
+   * Takes the event row lock, then re-reads the event under it. Every write
+   * that depends on capacity or event status (edits, cancel, participation)
+   * goes through this lock so they serialize.
+   */
+  async lockEvent(tx: Prisma.TransactionClient, id: string) {
     await tx.$queryRaw`SELECT id FROM "Event" WHERE id = ${id} FOR UPDATE`;
     return tx.event.findUniqueOrThrow({
       where: { id },
