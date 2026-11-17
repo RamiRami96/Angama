@@ -120,87 +120,98 @@ export class EventsService {
     return toEventDto(row, organizerId);
   }
 
+  /**
+   * Runs under the event row lock (same lock as participation changes), so a
+   * concurrent approval cannot push the confirmed count above a lowered
+   * `maxParticipants`, and an edit cannot land after a committed cancel.
+   */
   async update(
     id: string,
     organizerId: string,
     dto: UpdateEventDto,
   ): Promise<EventDto> {
-    const event = await this.prisma.event.findUnique({
-      where: { id },
-      include: { category: true },
-    });
-    if (!event) throw new NotFoundException('Event not found');
-    if (event.organizerId !== organizerId) throw new ForbiddenException();
-    if (!OPEN_STATUSES.includes(event.status)) {
-      throw new ConflictException('Event can no longer be edited');
-    }
-    if (dto.status !== undefined && dto.status !== event.status) {
-      throw new ConflictException(
-        'Use the publish or cancel endpoints to change the status',
-      );
-    }
+    await this.assertOrganizer(id, organizerId);
 
-    if (dto.maxParticipants !== undefined) {
-      const confirmed = await this.prisma.eventParticipant.count({
-        where: { eventId: id, status: { in: CONFIRMED_STATUSES } },
-      });
-      if (dto.maxParticipants < confirmed) {
+    return this.prisma.$transaction(async (tx) => {
+      const event = await this.lockEvent(tx, id);
+      if (!OPEN_STATUSES.includes(event.status)) {
+        throw new ConflictException('Event can no longer be edited');
+      }
+      if (dto.status !== undefined && dto.status !== event.status) {
         throw new ConflictException(
-          `Max participants cannot be below the ${confirmed} confirmed participants`,
+          'Use the publish or cancel endpoints to change the status',
         );
       }
-    }
 
-    const startsAt = dto.startsAt ? new Date(dto.startsAt) : event.startsAt;
-    const endsAt = dto.endsAt ? new Date(dto.endsAt) : event.endsAt;
-    if (endsAt <= startsAt) {
-      throw new BadRequestException('End must be after start');
-    }
+      if (dto.maxParticipants !== undefined) {
+        const confirmed = await tx.eventParticipant.count({
+          where: { eventId: id, status: { in: CONFIRMED_STATUSES } },
+        });
+        if (dto.maxParticipants < confirmed) {
+          throw new ConflictException(
+            `Max participants cannot be below the ${confirmed} confirmed participants`,
+          );
+        }
+      }
 
-    const data: Prisma.EventUncheckedUpdateInput = {};
-    if (dto.name !== undefined) data.name = dto.name;
-    if (dto.description !== undefined) data.description = dto.description;
-    if (dto.coverImageUrl !== undefined) data.coverImageUrl = dto.coverImageUrl;
-    if (dto.startsAt !== undefined) data.startsAt = startsAt;
-    if (dto.endsAt !== undefined) data.endsAt = endsAt;
-    if (dto.city !== undefined) data.city = dto.city;
-    if (dto.address !== undefined) data.address = dto.address;
-    if (dto.maxParticipants !== undefined) {
-      data.maxParticipants = dto.maxParticipants;
-    }
-    if (dto.price !== undefined) data.price = dto.price;
-    if (dto.details !== undefined) {
-      data.details = parseEventDetails(
-        event.category.code as EventCategoryCode,
-        { ...(event.details as Record<string, unknown>), ...dto.details },
-      ) as Prisma.InputJsonObject;
-    }
-    if (dto.language !== undefined) {
-      data.languageId = await this.resolveLanguageId(dto.language);
-    }
+      const startsAt = dto.startsAt ? new Date(dto.startsAt) : event.startsAt;
+      const endsAt = dto.endsAt ? new Date(dto.endsAt) : event.endsAt;
+      if (endsAt <= startsAt) {
+        throw new BadRequestException('End must be after start');
+      }
 
-    const row = await this.prisma.event.update({
-      where: { id },
-      data,
-      include: EVENT_INCLUDE,
+      const data: Prisma.EventUncheckedUpdateInput = {};
+      if (dto.name !== undefined) data.name = dto.name;
+      if (dto.description !== undefined) data.description = dto.description;
+      if (dto.coverImageUrl !== undefined) {
+        data.coverImageUrl = dto.coverImageUrl;
+      }
+      if (dto.startsAt !== undefined) data.startsAt = startsAt;
+      if (dto.endsAt !== undefined) data.endsAt = endsAt;
+      if (dto.city !== undefined) data.city = dto.city;
+      if (dto.address !== undefined) data.address = dto.address;
+      if (dto.maxParticipants !== undefined) {
+        data.maxParticipants = dto.maxParticipants;
+      }
+      if (dto.price !== undefined) data.price = dto.price;
+      if (dto.details !== undefined) {
+        data.details = parseEventDetails(
+          event.category.code as EventCategoryCode,
+          { ...(event.details as Record<string, unknown>), ...dto.details },
+        ) as Prisma.InputJsonObject;
+      }
+      if (dto.language !== undefined) {
+        data.languageId = await this.resolveLanguageId(dto.language, tx);
+      }
+
+      const row = await tx.event.update({
+        where: { id },
+        data,
+        include: EVENT_INCLUDE,
+      });
+      return toEventDto(row, organizerId);
     });
-    return toEventDto(row, organizerId);
   }
 
+  /** Locked like `cancel`, so a concurrent cancel is never overwritten. */
   async publish(id: string, organizerId: string): Promise<EventDto> {
-    const event = await this.assertOrganizer(id, organizerId);
-    if (event.status !== EventStatus.DRAFT) {
-      throw new ConflictException('Only a draft can be published');
-    }
-    if (event.startsAt.getTime() <= Date.now()) {
-      throw new BadRequestException('Start must be in the future');
-    }
-    const row = await this.prisma.event.update({
-      where: { id },
-      data: { status: EventStatus.PUBLISHED },
-      include: EVENT_INCLUDE,
+    await this.assertOrganizer(id, organizerId);
+
+    return this.prisma.$transaction(async (tx) => {
+      const event = await this.lockEvent(tx, id);
+      if (event.status !== EventStatus.DRAFT) {
+        throw new ConflictException('Only a draft can be published');
+      }
+      if (event.startsAt.getTime() <= Date.now()) {
+        throw new BadRequestException('Start must be in the future');
+      }
+      const row = await tx.event.update({
+        where: { id },
+        data: { status: EventStatus.PUBLISHED },
+        include: EVENT_INCLUDE,
+      });
+      return toEventDto(row, organizerId);
     });
-    return toEventDto(row, organizerId);
   }
 
   /**
@@ -211,9 +222,7 @@ export class EventsService {
     await this.assertOrganizer(id, organizerId);
 
     return this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM "Event" WHERE id = ${id} FOR UPDATE`;
-
-      const event = await tx.event.findUniqueOrThrow({ where: { id } });
+      const event = await this.lockEvent(tx, id);
       if (!OPEN_STATUSES.includes(event.status)) {
         throw new ConflictException('Event can no longer be cancelled');
       }
@@ -266,8 +275,20 @@ export class EventsService {
     return event;
   }
 
-  private async resolveLanguageId(code: string): Promise<string> {
-    const language = await this.prisma.language.findUnique({
+  /** Takes the event row lock, then re-reads the event under it. */
+  private async lockEvent(tx: Prisma.TransactionClient, id: string) {
+    await tx.$queryRaw`SELECT id FROM "Event" WHERE id = ${id} FOR UPDATE`;
+    return tx.event.findUniqueOrThrow({
+      where: { id },
+      include: { category: true },
+    });
+  }
+
+  private async resolveLanguageId(
+    code: string,
+    client: Prisma.TransactionClient = this.prisma,
+  ): Promise<string> {
+    const language = await client.language.findUnique({
       where: { code: code.toLowerCase() },
     });
     if (!language) throw new BadRequestException(`Unknown language: ${code}`);

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import type { CreateEventDto } from '../../contracts';
 import type { PrismaService } from '../../prisma/prisma.service';
+import { CONFIRMED_STATUSES } from './events.mapper';
 import { EventsService } from './events.service';
 
 const HOUR = 3_600_000;
@@ -41,31 +42,23 @@ function eventRow(over: Partial<Record<string, unknown>> = {}) {
 }
 
 function setup(row: ReturnType<typeof eventRow> | null = eventRow()) {
-  const db = {
+  const language = () => ({
+    findUnique: jest
+      .fn()
+      .mockResolvedValue({ id: 'lang', code: 'en', name: 'English' }),
+  });
+  // Locked writes must go through the transaction client, so `tx` is a
+  // separate mock: a write on the plain client shows up as a failed assertion.
+  const tx = {
     event: {
-      findMany: jest.fn().mockResolvedValue(row ? [row] : []),
-      findUnique: jest.fn().mockResolvedValue(row),
       findUniqueOrThrow: jest.fn().mockResolvedValue(row),
-      create: jest
-        .fn()
-        .mockImplementation(({ data }: { data: object }) => eventRow(data)),
       update: jest
         .fn()
         .mockImplementation(({ data }: { data: object }) =>
           eventRow({ ...row, ...(data as Record<string, unknown>) }),
         ),
-      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
-    eventCategory: {
-      findUnique: jest
-        .fn()
-        .mockResolvedValue({ id: 'cat', code: 'BOARD_GAMES', name: 'B' }),
-    },
-    language: {
-      findUnique: jest
-        .fn()
-        .mockResolvedValue({ id: 'lang', code: 'en', name: 'English' }),
-    },
+    language: language(),
     eventParticipant: {
       count: jest.fn().mockResolvedValue(0),
       findMany: jest.fn().mockResolvedValue([]),
@@ -74,12 +67,34 @@ function setup(row: ReturnType<typeof eventRow> | null = eventRow()) {
       createMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
     $queryRaw: jest.fn().mockResolvedValue([]),
-    $transaction: jest.fn(),
   };
-  db.$transaction.mockImplementation((fn: (tx: typeof db) => unknown) =>
-    fn(db),
-  );
-  return { db, service: new EventsService(db as unknown as PrismaService) };
+  const db = {
+    event: {
+      findMany: jest.fn().mockResolvedValue(row ? [row] : []),
+      findUnique: jest.fn().mockResolvedValue(row),
+      create: jest
+        .fn()
+        .mockImplementation(({ data }: { data: object }) => eventRow(data)),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+    },
+    eventCategory: {
+      findUnique: jest
+        .fn()
+        .mockResolvedValue({ id: 'cat', code: 'BOARD_GAMES', name: 'B' }),
+    },
+    language: language(),
+    eventParticipant: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+    $transaction: jest
+      .fn()
+      .mockImplementation((fn: (client: typeof tx) => unknown) => fn(tx)),
+  };
+  return {
+    db,
+    tx,
+    service: new EventsService(db as unknown as PrismaService),
+  };
 }
 
 function firstArg<T>(fn: jest.Mock): T {
@@ -241,55 +256,55 @@ describe('EventsService.create', () => {
 
 describe('EventsService.update', () => {
   it('only lets the organizer edit', async () => {
-    const { service, db } = setup();
+    const { service, tx } = setup();
     await expect(
       service.update('e1', 'intruder', { name: 'x' }),
     ).rejects.toBeInstanceOf(ForbiddenException);
-    expect(db.event.update).not.toHaveBeenCalled();
+    expect(tx.event.update).not.toHaveBeenCalled();
   });
 
   it('refuses to edit a CANCELLED or COMPLETED event', async () => {
     for (const status of ['CANCELLED', 'COMPLETED']) {
-      const { service, db } = setup(eventRow({ status }));
+      const { service, tx } = setup(eventRow({ status }));
       await expect(
         service.update('e1', 'org', { name: 'x' }),
       ).rejects.toBeInstanceOf(ConflictException);
-      expect(db.event.update).not.toHaveBeenCalled();
+      expect(tx.event.update).not.toHaveBeenCalled();
     }
   });
 
   it('refuses a status change (publish/cancel endpoints only)', async () => {
-    const { service, db } = setup(eventRow({ status: 'PUBLISHED' }));
+    const { service, tx } = setup(eventRow({ status: 'PUBLISHED' }));
     await expect(
       service.update('e1', 'org', { status: 'DRAFT' }),
     ).rejects.toBeInstanceOf(ConflictException);
-    expect(db.event.update).not.toHaveBeenCalled();
+    expect(tx.event.update).not.toHaveBeenCalled();
   });
 
   it('accepts the unchanged status', async () => {
-    const { service, db } = setup(eventRow({ status: 'DRAFT' }));
+    const { service, tx } = setup(eventRow({ status: 'DRAFT' }));
     await service.update('e1', 'org', { status: 'DRAFT', name: 'y' });
     const { data } = firstArg<{ data: Record<string, unknown> }>(
-      db.event.update,
+      tx.event.update,
     );
     expect(data).not.toHaveProperty('status');
     expect(data.name).toBe('y');
   });
 
   it('refuses lowering maxParticipants below the confirmed count', async () => {
-    const { service, db } = setup();
-    db.eventParticipant.count.mockResolvedValue(2);
+    const { service, tx } = setup();
+    tx.eventParticipant.count.mockResolvedValue(2);
     await expect(
       service.update('e1', 'org', { maxParticipants: 1 }),
     ).rejects.toBeInstanceOf(ConflictException);
-    expect(db.event.update).not.toHaveBeenCalled();
+    expect(tx.event.update).not.toHaveBeenCalled();
   });
 
   it('validates merged details against the stored category', async () => {
-    const { service, db } = setup();
+    const { service, tx } = setup();
     await service.update('e1', 'org', { details: { game: 'Go' } });
     const { data } = firstArg<{ data: Record<string, unknown> }>(
-      db.event.update,
+      tx.event.update,
     );
     expect(data.details).toEqual({ game: 'Go', experienceLevel: 'BEGINNER' });
 
@@ -299,29 +314,60 @@ describe('EventsService.update', () => {
   });
 
   it('re-checks endsAt > startsAt against the stored values', async () => {
-    const { service, db } = setup();
+    const { service, tx } = setup();
     await expect(
       service.update('e1', 'org', {
         startsAt: new Date(futureEnd.getTime() + HOUR).toISOString(),
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
-    expect(db.event.update).not.toHaveBeenCalled();
+    expect(tx.event.update).not.toHaveBeenCalled();
   });
 
   it('resolves a new language code case-insensitively', async () => {
-    const { service, db } = setup();
+    const { service, tx } = setup();
     await service.update('e1', 'org', { language: 'DE' });
-    expect(db.language.findUnique).toHaveBeenCalledWith({
+    expect(tx.language.findUnique).toHaveBeenCalledWith({
       where: { code: 'de' },
     });
+  });
+
+  it('locks the row, then re-reads status and counts on tx before updating', async () => {
+    const { service, tx } = setup();
+    await service.update('e1', 'org', { maxParticipants: 3 });
+
+    expect(tx.$queryRaw).toHaveBeenCalled();
+    const lock = tx.$queryRaw.mock.invocationCallOrder[0];
+    const reread = tx.event.findUniqueOrThrow.mock.invocationCallOrder[0];
+    const count = tx.eventParticipant.count.mock.invocationCallOrder[0];
+    const update = tx.event.update.mock.invocationCallOrder[0];
+    expect(lock).toBeLessThan(reread);
+    expect(reread).toBeLessThan(count);
+    expect(count).toBeLessThan(update);
+
+    const { where } = firstArg<{
+      where: { eventId: string; status: { in: string[] } };
+    }>(tx.eventParticipant.count);
+    expect(where.eventId).toBe('e1');
+    expect(where.status.in).toEqual(CONFIRMED_STATUSES);
+  });
+
+  it('refuses an event that became CANCELLED after the lock', async () => {
+    const { service, tx } = setup();
+    tx.event.findUniqueOrThrow.mockResolvedValue(
+      eventRow({ status: 'CANCELLED' }),
+    );
+    await expect(
+      service.update('e1', 'org', { name: 'x' }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(tx.event.update).not.toHaveBeenCalled();
   });
 });
 
 describe('EventsService.publish', () => {
   it('publishes a DRAFT', async () => {
-    const { service, db } = setup(eventRow({ status: 'DRAFT' }));
+    const { service, tx } = setup(eventRow({ status: 'DRAFT' }));
     await service.publish('e1', 'org');
-    expect(db.event.update).toHaveBeenCalledWith(
+    expect(tx.event.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'e1' },
         data: { status: 'PUBLISHED' },
@@ -330,11 +376,11 @@ describe('EventsService.publish', () => {
   });
 
   it('refuses anything but a DRAFT', async () => {
-    const { service, db } = setup(eventRow({ status: 'PUBLISHED' }));
+    const { service, tx } = setup(eventRow({ status: 'PUBLISHED' }));
     await expect(service.publish('e1', 'org')).rejects.toBeInstanceOf(
       ConflictException,
     );
-    expect(db.event.update).not.toHaveBeenCalled();
+    expect(tx.event.update).not.toHaveBeenCalled();
   });
 
   it('refuses a DRAFT whose start has passed', async () => {
@@ -352,30 +398,53 @@ describe('EventsService.publish', () => {
       ForbiddenException,
     );
   });
+
+  it('locks the row before re-reading the status, then updates on tx', async () => {
+    const { service, tx } = setup(eventRow({ status: 'DRAFT' }));
+    await service.publish('e1', 'org');
+    expect(tx.$queryRaw).toHaveBeenCalled();
+    expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      tx.event.findUniqueOrThrow.mock.invocationCallOrder[0],
+    );
+    expect(tx.event.findUniqueOrThrow.mock.invocationCallOrder[0]).toBeLessThan(
+      tx.event.update.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('refuses a DRAFT that became CANCELLED after the lock', async () => {
+    const { service, tx } = setup(eventRow({ status: 'DRAFT' }));
+    tx.event.findUniqueOrThrow.mockResolvedValue(
+      eventRow({ status: 'CANCELLED' }),
+    );
+    await expect(service.publish('e1', 'org')).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+    expect(tx.event.update).not.toHaveBeenCalled();
+  });
 });
 
 describe('EventsService.cancel', () => {
   it('locks the row, cancels and notifies REQUESTED/APPROVED participants', async () => {
-    const { service, db } = setup();
-    db.eventParticipant.findMany.mockResolvedValue([
+    const { service, tx } = setup();
+    tx.eventParticipant.findMany.mockResolvedValue([
       { userId: 'u1' },
       { userId: 'u2' },
     ]);
     await service.cancel('e1', 'org');
 
-    expect(db.$queryRaw).toHaveBeenCalled();
-    expect(db.event.update).toHaveBeenCalledWith(
+    expect(tx.$queryRaw).toHaveBeenCalled();
+    expect(tx.event.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'e1' },
         data: { status: 'CANCELLED' },
       }),
     );
-    expect(db.eventParticipant.findMany).toHaveBeenCalledWith(
+    expect(tx.eventParticipant.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { eventId: 'e1', status: { in: ['REQUESTED', 'APPROVED'] } },
       }),
     );
-    expect(db.notification.createMany).toHaveBeenCalledWith({
+    expect(tx.notification.createMany).toHaveBeenCalledWith({
       data: [
         {
           type: 'EVENT_CANCELLED',
@@ -394,12 +463,12 @@ describe('EventsService.cancel', () => {
   });
 
   it('refuses to cancel twice and sends no notifications', async () => {
-    const { service, db } = setup(eventRow({ status: 'CANCELLED' }));
+    const { service, tx } = setup(eventRow({ status: 'CANCELLED' }));
     await expect(service.cancel('e1', 'org')).rejects.toBeInstanceOf(
       ConflictException,
     );
-    expect(db.notification.createMany).not.toHaveBeenCalled();
-    expect(db.event.update).not.toHaveBeenCalled();
+    expect(tx.notification.createMany).not.toHaveBeenCalled();
+    expect(tx.event.update).not.toHaveBeenCalled();
   });
 
   it('refuses to cancel a COMPLETED event', async () => {
@@ -410,11 +479,11 @@ describe('EventsService.cancel', () => {
   });
 
   it('only lets the organizer cancel', async () => {
-    const { service, db } = setup();
+    const { service, tx } = setup();
     await expect(service.cancel('e1', 'x')).rejects.toBeInstanceOf(
       ForbiddenException,
     );
-    expect(db.event.update).not.toHaveBeenCalled();
+    expect(tx.event.update).not.toHaveBeenCalled();
   });
 });
 
