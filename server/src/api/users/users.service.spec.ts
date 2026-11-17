@@ -1,5 +1,11 @@
+import { BadRequestException } from '@nestjs/common';
 import type { PrismaService } from '../../prisma/prisma.service';
+import type { EventsService } from '../events/events.service';
 import { UsersService } from './users.service';
+
+const noEvents = {
+  completeFinished: jest.fn(),
+} as unknown as EventsService;
 
 describe('UsersService.updateProfile', () => {
   const user = {
@@ -8,15 +14,20 @@ describe('UsersService.updateProfile', () => {
     email: 'b@b.co',
     password: 'hash',
     avatarUrl: null,
+    city: 'Berlin',
+    about: null,
     dateOfBirth: new Date('2000-01-02'),
     createdAt: new Date('2024-01-01T00:00:00Z'),
   };
 
   it('returns the public user shape and never the password', async () => {
     const update = jest.fn().mockResolvedValue(user);
-    const service = new UsersService({
-      user: { update },
-    } as unknown as PrismaService);
+    const service = new UsersService(
+      {
+        user: { update },
+      } as unknown as PrismaService,
+      noEvents,
+    );
 
     const result = await service.updateProfile('u1', { name: 'Bob' });
 
@@ -29,6 +40,8 @@ describe('UsersService.updateProfile', () => {
       name: 'Bob',
       email: 'b@b.co',
       avatarUrl: null,
+      city: 'Berlin',
+      about: null,
       dateOfBirth: '2000-01-02',
       createdAt: '2024-01-01T00:00:00.000Z',
     });
@@ -37,58 +50,334 @@ describe('UsersService.updateProfile', () => {
 
   it('passes null through so the avatar can be removed', async () => {
     const update = jest.fn().mockResolvedValue(user);
-    const service = new UsersService({
-      user: { update },
-    } as unknown as PrismaService);
+    const service = new UsersService(
+      {
+        user: { update },
+      } as unknown as PrismaService,
+      noEvents,
+    );
     await service.updateProfile('u1', { avatarUrl: null });
     expect(update).toHaveBeenCalledWith({
       where: { id: 'u1' },
       data: { avatarUrl: null },
     });
   });
+
+  it('accepts city and about', async () => {
+    const update = jest
+      .fn()
+      .mockResolvedValue({ ...user, city: 'Paris', about: 'Hi' });
+    const service = new UsersService(
+      {
+        user: { update },
+      } as unknown as PrismaService,
+      noEvents,
+    );
+
+    const result = await service.updateProfile('u1', {
+      city: 'Paris',
+      about: 'Hi',
+    });
+
+    expect(update).toHaveBeenCalledWith({
+      where: { id: 'u1' },
+      data: { city: 'Paris', about: 'Hi' },
+    });
+    expect(result).toMatchObject({ city: 'Paris', about: 'Hi' });
+  });
 });
 
-describe('UsersService.getMyApplications', () => {
-  it("returns only the caller's registrations, newest first, with ISO dates", async () => {
-    const findMany = jest.fn().mockResolvedValue([
-      {
-        clubId: 'c1',
-        status: 'PENDING',
-        registeredAt: new Date('2024-05-01T10:00:00Z'),
-        club: {
-          id: 'c1',
-          name: 'Chess',
-          startDate: new Date('2024-06-01T18:00:00Z'),
-          location: 'Cafe',
-        },
+describe('UsersService preferences and languages', () => {
+  function setup(
+    opts: {
+      prefs?: { id: string; type: string; code: string }[];
+      langs?: { id: string; code: string }[];
+      userPrefs?: { preference: { type: string; code: string } }[];
+      userLangs?: { level: string; language: { code: string } }[];
+    } = {},
+  ) {
+    const calls: string[] = [];
+    const db = {
+      preference: {
+        findMany: jest.fn().mockResolvedValue(opts.prefs ?? []),
       },
-    ]);
-    const service = new UsersService({
-      registration: { findMany },
-    } as unknown as PrismaService);
+      language: { findMany: jest.fn().mockResolvedValue(opts.langs ?? []) },
+      userPreference: {
+        findMany: jest.fn().mockResolvedValue(opts.userPrefs ?? []),
+        deleteMany: jest.fn(() => {
+          calls.push('userPreference.deleteMany');
+          return Promise.resolve({ count: 0 });
+        }),
+        createMany: jest.fn(() => {
+          calls.push('userPreference.createMany');
+          return Promise.resolve({ count: 0 });
+        }),
+      },
+      userLanguage: {
+        findMany: jest.fn().mockResolvedValue(opts.userLangs ?? []),
+        deleteMany: jest.fn(() => {
+          calls.push('userLanguage.deleteMany');
+          return Promise.resolve({ count: 0 });
+        }),
+        createMany: jest.fn(() => {
+          calls.push('userLanguage.createMany');
+          return Promise.resolve({ count: 0 });
+        }),
+      },
+      $transaction: jest.fn(async (ops: Promise<unknown>[]) => {
+        calls.push('$transaction');
+        return Promise.all(ops);
+      }),
+    };
+    const service = new UsersService(db as unknown as PrismaService, noEvents);
+    return { db, service, calls };
+  }
 
-    const result = await service.getMyApplications('u1');
+  describe('getPreferences', () => {
+    it('groups goals and interests by type and lists languages with level', async () => {
+      const { service, db } = setup({
+        userPrefs: [
+          { preference: { type: 'GOAL', code: 'FIND_FRIENDS' } },
+          { preference: { type: 'INTEREST', code: 'SPORTS' } },
+          { preference: { type: 'INTEREST', code: 'CULTURE' } },
+        ],
+        userLangs: [{ level: 'B2', language: { code: 'en' } }],
+      });
 
-    expect(findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
+      await expect(service.getPreferences('u1')).resolves.toEqual({
+        goals: ['FIND_FRIENDS'],
+        interests: ['SPORTS', 'CULTURE'],
+        languages: [{ code: 'en', level: 'B2' }],
+      });
+      expect(db.userPreference.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { userId: 'u1' } }),
+      );
+    });
+  });
+
+  describe('setPreferences', () => {
+    const prefs = [
+      { id: 'p1', type: 'GOAL', code: 'FIND_FRIENDS' },
+      { id: 'p2', type: 'INTEREST', code: 'SPORTS' },
+    ];
+
+    it('resolves codes, then replaces all rows in a transaction', async () => {
+      const { service, db, calls } = setup({
+        prefs,
+        userPrefs: prefs.map((p) => ({ preference: p })),
+      });
+
+      const result = await service.setPreferences('u1', {
+        goals: ['FIND_FRIENDS'],
+        interests: ['SPORTS'],
+      });
+
+      expect(db.preference.findMany).toHaveBeenCalledTimes(1);
+      expect(db.userPreference.deleteMany).toHaveBeenCalledWith({
         where: { userId: 'u1' },
-        orderBy: { registeredAt: 'desc' },
+      });
+      expect(db.userPreference.createMany).toHaveBeenCalledWith({
+        data: [
+          { userId: 'u1', preferenceId: 'p1' },
+          { userId: 'u1', preferenceId: 'p2' },
+        ],
+      });
+      expect(db.$transaction).toHaveBeenCalledTimes(1);
+      expect(calls.indexOf('userPreference.deleteMany')).toBeLessThan(
+        calls.indexOf('userPreference.createMany'),
+      );
+      expect(result).toEqual({
+        goals: ['FIND_FRIENDS'],
+        interests: ['SPORTS'],
+        languages: [],
+      });
+    });
+
+    it('rejects unknown codes without touching the user rows', async () => {
+      const { service, db } = setup({ prefs: [prefs[0]] });
+
+      await expect(
+        service.setPreferences('u1', {
+          goals: ['FIND_FRIENDS'],
+          interests: ['SPORTS'],
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(db.$transaction).not.toHaveBeenCalled();
+      expect(db.userPreference.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('clears everything when both lists are empty', async () => {
+      const { service, db } = setup();
+
+      await service.setPreferences('u1', { goals: [], interests: [] });
+
+      expect(db.userPreference.deleteMany).toHaveBeenCalled();
+      expect(db.userPreference.createMany).toHaveBeenCalledWith({ data: [] });
+    });
+  });
+
+  describe('setLanguages', () => {
+    it('lowercases codes, then replaces all rows in a transaction', async () => {
+      const { service, db, calls } = setup({
+        langs: [{ id: 'l1', code: 'en' }],
+        userLangs: [{ level: 'B2', language: { code: 'en' } }],
+      });
+
+      const result = await service.setLanguages('u1', {
+        languages: [{ code: 'EN', level: 'B2' }],
+      });
+
+      expect(db.language.findMany).toHaveBeenCalledWith({
+        where: { code: { in: ['en'] } },
+      });
+      expect(db.userLanguage.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'u1' },
+      });
+      expect(db.userLanguage.createMany).toHaveBeenCalledWith({
+        data: [{ userId: 'u1', languageId: 'l1', level: 'B2' }],
+      });
+      expect(db.$transaction).toHaveBeenCalledTimes(1);
+      expect(calls.indexOf('userLanguage.deleteMany')).toBeLessThan(
+        calls.indexOf('userLanguage.createMany'),
+      );
+      expect(result.languages).toEqual([{ code: 'en', level: 'B2' }]);
+    });
+
+    it('rejects an unknown language code', async () => {
+      const { service, db } = setup({ langs: [] });
+
+      await expect(
+        service.setLanguages('u1', {
+          languages: [{ code: 'xx', level: 'A1' }],
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(db.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('rejects codes that collide after lowercasing', async () => {
+      const { service, db } = setup({ langs: [{ id: 'l1', code: 'en' }] });
+
+      await expect(
+        service.setLanguages('u1', {
+          languages: [
+            { code: 'en', level: 'A1' },
+            { code: 'EN', level: 'B1' },
+          ],
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(db.$transaction).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe('UsersService.getMyEvents', () => {
+  const start = new Date('2030-01-01T10:00:00Z');
+  function eventRow(id: string, participants: object[] = []) {
+    return {
+      id,
+      name: id,
+      description: '',
+      details: {},
+      coverImageUrl: null,
+      startsAt: start,
+      endsAt: new Date('2030-01-01T12:00:00Z'),
+      city: 'Berlin',
+      address: 'Main St 1',
+      maxParticipants: 5,
+      price: null,
+      status: 'DRAFT',
+      createdAt: start,
+      organizer: { id: 'u1', name: 'O', avatarUrl: null },
+      category: { code: 'BOARD_GAMES', name: 'Board games' },
+      language: { code: 'en', name: 'English' },
+      participants,
+    };
+  }
+
+  function setup() {
+    const db = {
+      event: { findMany: jest.fn() },
+      eventParticipant: { findMany: jest.fn(), groupBy: jest.fn() },
+    };
+    const events = { completeFinished: jest.fn().mockResolvedValue(undefined) };
+    const service = new UsersService(
+      db as unknown as PrismaService,
+      events as unknown as EventsService,
+    );
+    return { db, events, service };
+  }
+
+  it('organizer: lists own events with grouped confirmed/pending counts', async () => {
+    const { db, events, service } = setup();
+    db.event.findMany.mockResolvedValue([eventRow('e1'), eventRow('e2')]);
+    db.eventParticipant.groupBy.mockResolvedValue([
+      { eventId: 'e1', status: 'REQUESTED', _count: 2 },
+      { eventId: 'e1', status: 'APPROVED', _count: 3 },
+      { eventId: 'e1', status: 'ATTENDED', _count: 1 },
+      { eventId: 'e1', status: 'REJECTED', _count: 4 },
+    ]);
+
+    const result = await service.getMyEvents('u1', 'organizer');
+
+    expect(events.completeFinished).toHaveBeenCalledTimes(1);
+    expect(db.event.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { organizerId: 'u1' },
+        orderBy: { startsAt: 'desc' },
       }),
     );
-    expect(result).toEqual([
+    expect(db.eventParticipant.groupBy).toHaveBeenCalledTimes(1);
+    expect(db.eventParticipant.groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        by: ['eventId', 'status'],
+        where: { eventId: { in: ['e1', 'e2'] } },
+      }),
+    );
+    expect(result).toHaveLength(2);
+    expect(result[0]).toMatchObject({
+      event: { id: 'e1', status: 'DRAFT' },
+      participantCount: 4,
+      pendingCount: 2,
+    });
+    expect(result[1]).toMatchObject({ participantCount: 0, pendingCount: 0 });
+  });
+
+  it('organizer: skips the count query when there are no events', async () => {
+    const { db, service } = setup();
+    db.event.findMany.mockResolvedValue([]);
+    expect(await service.getMyEvents('u1', 'organizer')).toEqual([]);
+    expect(db.eventParticipant.groupBy).not.toHaveBeenCalled();
+  });
+
+  it('participant: returns the participation status per row, newest first', async () => {
+    const { db, events, service } = setup();
+    db.eventParticipant.findMany.mockResolvedValue([
       {
-        userId: 'u1',
-        clubId: 'c1',
-        clubName: 'Chess',
-        status: expect.any(String) as string,
-        registeredAt: '2024-05-01T10:00:00.000Z',
-        club: {
-          id: 'c1',
-          name: 'Chess',
-          startDate: '2024-06-01T18:00:00.000Z',
-          location: 'Cafe',
-        },
+        status: 'REJECTED',
+        event: eventRow('e1'),
       },
+      {
+        status: 'APPROVED',
+        event: eventRow('e2', [{ userId: 'u1', status: 'APPROVED' }]),
+      },
+    ]);
+
+    const result = await service.getMyEvents('u1', 'participant');
+
+    expect(events.completeFinished).toHaveBeenCalledTimes(1);
+    expect(db.eventParticipant.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: 'u1' },
+        orderBy: { createdAt: 'desc' },
+      }),
+    );
+    expect(result.map((r) => r.participationStatus)).toEqual([
+      'REJECTED',
+      'APPROVED',
+    ]);
+    expect(result.map((r) => r.event.myParticipation)).toEqual([
+      'REJECTED',
+      'APPROVED',
     ]);
   });
 });

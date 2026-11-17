@@ -5,6 +5,7 @@ export const signUpSchema = z.object({
   email: z.email('Invalid email address').toLowerCase(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   dateOfBirth: z.iso.date('Use format YYYY-MM-DD'),
+  city: z.string().trim().min(1, 'City is required'),
 });
 
 // Sign-in only requires a non-empty password: the length rule applies when an

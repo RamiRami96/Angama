@@ -1,9 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import {
-  createClubSchema,
   signInSchema,
   signUpSchema,
-  listClubsQuerySchema,
   updateProfileSchema,
 } from '../../contracts';
 import { parseEnv } from '../../config/env';
@@ -25,6 +23,7 @@ describe('ZodValidationPipe', () => {
         email: 'nope',
         password: '1',
         dateOfBirth: 'x',
+        city: '',
       });
       throw new Error('should throw');
     } catch (e) {
@@ -35,6 +34,7 @@ describe('ZodValidationPipe', () => {
       };
       expect(typeof body.message).toBe('string');
       expect(body.errors.map((x) => x.path).sort()).toEqual([
+        'city',
         'dateOfBirth',
         'email',
         'name',
@@ -51,27 +51,7 @@ describe('ZodValidationPipe', () => {
 });
 
 describe('schemas', () => {
-  it('createClub requires ISO startDate and integer maxMembers >= 1', () => {
-    const ok = {
-      name: 'n',
-      description: '',
-      location: '',
-      startDate: new Date().toISOString(),
-      maxMembers: 5,
-    };
-    expect(createClubSchema.safeParse(ok).success).toBe(true);
-    expect(createClubSchema.safeParse({ ...ok, maxMembers: 0 }).success).toBe(
-      false,
-    );
-    expect(createClubSchema.safeParse({ ...ok, maxMembers: '5' }).success).toBe(
-      false,
-    );
-    expect(
-      createClubSchema.safeParse({ ...ok, startDate: 'tomorrow' }).success,
-    ).toBe(false);
-  });
-
-  it('updateProfile only allows name/avatarUrl', () => {
+  it('updateProfile only allows profile fields', () => {
     expect(updateProfileSchema.parse({ name: 'Bob', id: 'x' })).toEqual({
       name: 'Bob',
     });
@@ -88,16 +68,6 @@ describe('schemas', () => {
     expect(ok('javascript:alert(1)')).toBe(false);
     expect(ok('data:text/html;base64,AAAA')).toBe(false);
     expect(ok('ftp://example.com/a.png')).toBe(false);
-  });
-
-  it('list query parses upcoming as a boolean string', () => {
-    expect(listClubsQuerySchema.parse({ upcoming: 'true' })).toEqual({
-      upcoming: true,
-    });
-    expect(listClubsQuerySchema.parse({})).toEqual({});
-    expect(listClubsQuerySchema.safeParse({ upcoming: 'maybe' }).success).toBe(
-      false,
-    );
   });
 });
 

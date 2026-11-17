@@ -94,6 +94,21 @@ export function SignUp({
               />
             )}
           />
+
+          <Controller
+            control={control}
+            name="city"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                placeholder="City"
+                onChangeText={onChange}
+                onBlur={onBlur}
+                value={value}
+                autoCapitalize="words"
+                error={errors.city?.message}
+              />
+            )}
+          />
         </View>
 
         {errors.root?.message && (

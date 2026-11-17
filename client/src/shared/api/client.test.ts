@@ -37,14 +37,14 @@ beforeEach(() => {
 describe("authorization", () => {
   it("sends the stored access token as a bearer header", async () => {
     fetchMock.mockResolvedValueOnce(json(200, {}));
-    await request("/clubs");
+    await request("/events");
     expect(authHeader(0)).toBe("Bearer old-token");
   });
 
   it("omits the header when signed out", async () => {
     mockedGetToken.mockResolvedValue(null);
     fetchMock.mockResolvedValueOnce(json(200, {}));
-    await request("/clubs");
+    await request("/events");
     expect(authHeader(0)).toBeUndefined();
   });
 });
@@ -56,13 +56,13 @@ describe("401 handling", () => {
       .mockResolvedValueOnce(json(200, { accessToken: "new-token" })) // /auth/refresh
       .mockResolvedValueOnce(json(200, { ok: true }));
 
-    const result = await requestParsed("/clubs", z.object({ ok: z.boolean() }));
+    const result = await requestParsed("/events", z.object({ ok: z.boolean() }));
 
     expect(result).toEqual({ ok: true });
     expect(urls()).toEqual([
-      "https://api.test/clubs",
+      "https://api.test/events",
       "https://api.test/auth/refresh",
-      "https://api.test/clubs",
+      "https://api.test/events",
     ]);
     expect(setAccessToken).toHaveBeenCalledWith("new-token");
     expect(authHeader(2)).toBe("Bearer new-token");
@@ -88,7 +88,7 @@ describe("401 handling", () => {
       .mockResolvedValueOnce(json(401, { message: "Unauthorized" }))
       .mockResolvedValueOnce(json(401)); // /auth/refresh
 
-    await expect(request("/clubs")).rejects.toMatchObject({ status: 401 });
+    await expect(request("/events")).rejects.toMatchObject({ status: 401 });
 
     expect(clearAccessToken).toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(2); // no retry of the original request
@@ -112,7 +112,7 @@ describe("401 handling", () => {
       .mockResolvedValueOnce(json(401))
       .mockResolvedValueOnce(json(500)); // /auth/refresh blows up
 
-    await expect(request("/clubs")).rejects.toMatchObject({ status: 500 });
+    await expect(request("/events")).rejects.toMatchObject({ status: 500 });
     expect(clearAccessToken).not.toHaveBeenCalled();
   });
 
@@ -125,8 +125,8 @@ describe("401 handling", () => {
       .mockResolvedValueOnce(json(200, { accessToken: "t3" }))
       .mockResolvedValueOnce(json(200, {}));
 
-    await request("/clubs");
-    await request("/clubs");
+    await request("/events");
+    await request("/events");
 
     expect(urls().filter((u) => u.endsWith("/auth/refresh"))).toHaveLength(2);
   });
@@ -152,7 +152,7 @@ describe("errors and responses", () => {
       },
     });
 
-    await expect(request("/clubs")).rejects.toMatchObject({
+    await expect(request("/events")).rejects.toMatchObject({
       status: 502,
       message: "Request failed",
     });
@@ -160,7 +160,7 @@ describe("errors and responses", () => {
 
   it("treats an empty success body (204) as no content", async () => {
     fetchMock.mockResolvedValueOnce(json(204));
-    await expect(request("/clubs/1", { method: "DELETE" })).resolves.toBeUndefined();
+    await expect(request("/events/1", { method: "DELETE" })).resolves.toBeUndefined();
   });
 });
 
@@ -169,7 +169,7 @@ describe("requestParsed", () => {
     jest.spyOn(console, "warn").mockImplementation(() => {});
     fetchMock.mockResolvedValueOnce(json(200, { id: 123 }));
 
-    await expect(requestParsed("/clubs/1", z.object({ id: z.string() }))).rejects.toThrow(
+    await expect(requestParsed("/events/1", z.object({ id: z.string() }))).rejects.toThrow(
       "Unexpected response from server",
     );
   });

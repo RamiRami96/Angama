@@ -22,13 +22,14 @@ export function SignUpForm() {
       email: "",
       password: "",
       dateOfBirth: "",
+      city: "",
     },
   });
 
   const onSubmit = async (data: SignUpFormData) => {
     try {
       await signUpMutation.mutateAsync(data);
-      router.replace("/clubs");
+      router.replace("/(main)/events");
     } catch (err) {
       if (ApiError.is(err, 409)) {
         setError("email", { message: err.message });
@@ -39,6 +40,7 @@ export function SignUpForm() {
         "email",
         "password",
         "dateOfBirth",
+        "city",
       ] as const);
       for (const [name, message] of Object.entries(fields)) {
         setError(name as keyof SignUpFormData, { message });

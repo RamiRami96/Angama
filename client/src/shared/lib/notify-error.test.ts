@@ -4,7 +4,7 @@ import { getErrorMessage } from "./notify-error";
 
 describe("getErrorMessage", () => {
   it("shows server messages as-is", () => {
-    expect(getErrorMessage(new ApiError(409, "Club is full"))).toBe("Club is full");
+    expect(getErrorMessage(new ApiError(409, "Event is full"))).toBe("Event is full");
   });
 
   it("explains network failures (fetch rejects with TypeError)", () => {

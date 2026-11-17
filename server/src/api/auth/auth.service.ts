@@ -33,6 +33,7 @@ export class AuthService {
         email: data.email,
         password: hashed,
         dateOfBirth: new Date(data.dateOfBirth),
+        city: data.city,
       },
     });
 

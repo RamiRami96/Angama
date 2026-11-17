@@ -1,24 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import type { Applicant, MyApplication } from "@/entities/application";
 import { User } from "@/entities/user";
 
 import { AccountInfo } from "@/widgets/account-info";
-import { ApplicantsList } from "@/widgets/applicants-list";
-import { UserApplicationsList } from "@/widgets/my-applications";
 
 export type SettingsProps = {
   user: User | null;
   isLoading: boolean;
-  isHost: boolean;
-  hostedClubName?: string;
-  applicants: Applicant[];
-  userApplications: MyApplication[];
-  onAccept: (userId: string) => void;
-  onReject: (userId: string) => void;
-  onRefreshApplications: () => void;
   onSignOut: () => void;
   onDeleteAccount: () => void;
 };
@@ -26,17 +17,11 @@ export type SettingsProps = {
 export function Settings({
   user,
   isLoading,
-  isHost,
-  hostedClubName,
-  applicants,
-  userApplications,
-  onAccept,
-  onReject,
-  onRefreshApplications,
   onSignOut,
   onDeleteAccount,
 }: SettingsProps) {
   const { top } = useSafeAreaInsets();
+  const router = useRouter();
 
   return (
     <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
@@ -54,23 +39,16 @@ export function Settings({
 
       <AccountInfo user={user} />
 
-      {userApplications.length > 0 && (
-        <UserApplicationsList
-          userApplications={userApplications}
-          onRefresh={onRefreshApplications}
-        />
-      )}
-
-      {isHost && (
-        <ApplicantsList
-          applicants={applicants}
-          hostedClubName={hostedClubName}
-          onAccept={onAccept}
-          onReject={onReject}
-        />
-      )}
-
       <View className="mx-4 mb-8 gap-3">
+        <Pressable
+          onPress={() => router.push("/profile/edit")}
+          disabled={isLoading}
+          className="flex-row items-center justify-center gap-2 bg-white/20 rounded-2xl py-4 active:opacity-70"
+        >
+          <Ionicons name="create-outline" size={20} color="#fff" />
+          <Text className="text-white font-semibold text-base">Edit Profile</Text>
+        </Pressable>
+
         <Pressable
           onPress={onSignOut}
           disabled={isLoading}

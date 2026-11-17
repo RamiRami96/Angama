@@ -4,6 +4,8 @@ export function toPublicUser(user: {
   name: string;
   email: string;
   avatarUrl: string | null;
+  city: string;
+  about: string | null;
   dateOfBirth: Date;
   createdAt: Date;
 }) {
@@ -12,6 +14,8 @@ export function toPublicUser(user: {
     name: user.name,
     email: user.email,
     avatarUrl: user.avatarUrl,
+    city: user.city,
+    about: user.about,
     dateOfBirth: user.dateOfBirth.toISOString().split('T')[0],
     createdAt: user.createdAt.toISOString(),
   };
