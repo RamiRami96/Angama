@@ -5,15 +5,10 @@ import { useDeleteAccount } from "@/features/delete-account";
 import { useSignOut } from "@/features/sign-out";
 import { ConfirmModal } from "@/shared/ui";
 
-import { useApplicants } from "../model/useApplicants";
-import { useHostedClub } from "../model/useHostedClub";
 import { Settings } from "./Settings";
 
 export function SettingsPage() {
   const user = useCurrentUser();
-  const hostedClub = useHostedClub(user);
-  const { applicants, userApplications, handleAccept, handleReject, handleRefreshApplications } =
-    useApplicants(hostedClub, user);
   const { isLoading: signOutLoading, handleSignOut } = useSignOut();
   const {
     isLoading: deleteLoading,
@@ -28,13 +23,6 @@ export function SettingsPage() {
       <Settings
         user={user}
         isLoading={signOutLoading || deleteLoading}
-        isHost={!!hostedClub}
-        hostedClubName={hostedClub?.name}
-        applicants={applicants}
-        userApplications={userApplications}
-        onAccept={handleAccept}
-        onReject={handleReject}
-        onRefreshApplications={handleRefreshApplications}
         onSignOut={handleSignOut}
         onDeleteAccount={handleDeleteAccount}
       />

@@ -28,7 +28,7 @@ export function SignUpForm() {
   const onSubmit = async (data: SignUpFormData) => {
     try {
       await signUpMutation.mutateAsync(data);
-      router.replace("/clubs");
+      router.replace("/(main)/events");
     } catch (err) {
       if (ApiError.is(err, 409)) {
         setError("email", { message: err.message });

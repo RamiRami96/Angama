@@ -4,6 +4,11 @@ export const userSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
+  city: z.string(),
+  about: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? undefined),
   dateOfBirth: z.string(),
   avatarUrl: z
     .string()

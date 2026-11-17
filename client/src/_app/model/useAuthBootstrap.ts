@@ -15,7 +15,7 @@ export function useAuthBootstrap() {
         queryFn: userService.getCurrentUser,
       })
       .then((user) => {
-        if (user) router.replace("/(main)/clubs");
+        if (user) router.replace("/(main)/events");
       })
       .catch(() => {
         // Offline or server error: keep the session, stay on the start screen.

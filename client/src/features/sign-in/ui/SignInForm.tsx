@@ -27,7 +27,7 @@ export function SignInForm() {
   const onSubmit = async (data: SignInFormData) => {
     try {
       await signInMutation.mutateAsync(data);
-      router.replace("/clubs");
+      router.replace("/(main)/events");
     } catch (err) {
       const { fields, root } = toFormErrors(err, ["email", "password"] as const);
       for (const [name, message] of Object.entries(fields)) {
