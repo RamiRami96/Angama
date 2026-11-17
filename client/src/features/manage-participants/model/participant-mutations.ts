@@ -28,6 +28,7 @@ export function useRejectParticipantMutation() {
     onError: notifyError("Couldn't reject participant"),
     onSuccess: (_data, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.participants(eventId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(eventId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.users.myEvents("organizer") });
     },
   });

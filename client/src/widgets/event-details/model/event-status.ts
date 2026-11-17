@@ -4,7 +4,7 @@ import type { Event } from "@/entities/event";
  * What the viewer can do on the event detail screen:
  * - `edit`: organizer actions (Edit / Publish a draft / Cancel event)
  * - `request`: request to join
- * - `pending`: request sent, waiting for the organizer
+ * - `pending`: request sent, waiting for the organizer; may withdraw it
  * - `cancel-request`: approved; may cancel participation
  * - `full`: no spots left
  * - `closed`: the event is cancelled or completed

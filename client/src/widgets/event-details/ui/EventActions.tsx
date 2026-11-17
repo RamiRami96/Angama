@@ -12,12 +12,13 @@ type Props = {
   isRequesting: boolean;
   isPublishing: boolean;
   isCancelling: boolean;
+  isCancellingParticipation: boolean;
   onRequest: () => void;
   onEdit: () => void;
   onPublish: () => void;
   onCancelEvent: () => void;
-  /** Cancel the viewer's approved participation. Wired in Task 11; disabled until then. */
-  onCancelParticipation?: () => void;
+  /** Withdraw the viewer's pending request or approved participation. */
+  onCancelParticipation: () => void;
 };
 
 const NONE_LABEL: Partial<Record<NonNullable<Event["myParticipation"]>, string>> = {
@@ -85,6 +86,7 @@ export function EventActions({
   isRequesting,
   isPublishing,
   isCancelling,
+  isCancellingParticipation,
   onRequest,
   onEdit,
   onPublish,
@@ -111,7 +113,18 @@ export function EventActions({
     case "request":
       return <GradientButton label="Request to Join" onPress={onRequest} loading={isRequesting} />;
     case "pending":
-      return <DisabledPill label="Request pending" icon="time-outline" />;
+      return (
+        <View className="gap-3 pt-1">
+          <DisabledPill label="Request pending" icon="time-outline" />
+          <OutlineButton
+            label="Withdraw request"
+            icon="exit-outline"
+            onPress={onCancelParticipation}
+            loading={isCancellingParticipation}
+            danger
+          />
+        </View>
+      );
     case "cancel-request":
       return (
         <View className="gap-2 pt-1">
@@ -123,6 +136,7 @@ export function EventActions({
             label="Cancel participation"
             icon="exit-outline"
             onPress={onCancelParticipation}
+            loading={isCancellingParticipation}
             danger
           />
         </View>

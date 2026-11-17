@@ -13,11 +13,15 @@ export function useNotifications() {
   });
 }
 
-/** Unread count for the tab badge. No websockets: polled while mounted. */
+/**
+ * Unread count for the tab badge. No websockets: polled while mounted and
+ * refetched whenever the app returns to the foreground.
+ */
 export function useUnreadCount() {
   return useQuery({
     queryKey: queryKeys.notifications.unreadCount,
     queryFn: notificationsService.getUnreadCount,
     refetchInterval: UNREAD_POLL_MS,
+    refetchOnWindowFocus: "always",
   });
 }
