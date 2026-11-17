@@ -5,6 +5,7 @@ import type { Event } from "@/entities/event";
 import { formatDate, formatTime } from "@/shared/lib";
 
 import { getEventCapacity } from "../model/event-capacity";
+import { formatPrice, getCategoryDetailRows } from "../model/event-details-rows";
 
 type Props = {
   event: Event;
@@ -12,14 +13,28 @@ type Props = {
 
 export function EventInfoCard({ event }: Props) {
   const { fillRatio, spotsLeft } = getEventCapacity(event);
+  const detailRows = getCategoryDetailRows(event);
 
   return (
     <View className="bg-black/30 rounded-3xl p-4 gap-4">
-      <View style={{ gap: 6 }}>
-        <Text className="text-white/60 text-xs font-semibold uppercase tracking-widest">
-          About
-        </Text>
-        <Text className="text-white text-sm leading-6">{event.description}</Text>
+      {event.description ? (
+        <>
+          <View style={{ gap: 6 }}>
+            <Text className="text-white/60 text-xs font-semibold uppercase tracking-widest">
+              About
+            </Text>
+            <Text className="text-white text-sm leading-6">{event.description}</Text>
+          </View>
+          <View className="border-t border-white/10" />
+        </>
+      ) : null}
+
+      <View style={{ gap: 8 }}>
+        {detailRows.map((row) => (
+          <InfoRow key={row.label} label={row.label} value={row.value} />
+        ))}
+        <InfoRow label="Language" value={event.language.name} />
+        <InfoRow label="Price (informational)" value={formatPrice(event.price)} />
       </View>
 
       <View className="border-t border-white/10" />
@@ -65,9 +80,20 @@ export function EventInfoCard({ event }: Props) {
           />
         </View>
         <Text className="text-white/50 text-xs">
-          {spotsLeft > 0 ? `${spotsLeft} spots remaining` : "No spots remaining"}
+          {spotsLeft > 0
+            ? `${spotsLeft} of ${event.maxParticipants} spots left`
+            : "No spots remaining"}
         </Text>
       </View>
+    </View>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View className="flex-row items-center justify-between gap-3">
+      <Text className="text-white/60 text-sm">{label}</Text>
+      <Text className="text-white font-medium text-sm flex-shrink text-right">{value}</Text>
     </View>
   );
 }

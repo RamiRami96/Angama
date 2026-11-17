@@ -1,15 +1,39 @@
-import { EVENT_STATUS_STYLE, type Event } from "@/entities/event";
+import type { Event } from "@/entities/event";
 
-// Interim (Task 8): Task 10 replaces this with `getEventAction`.
-export function getEventStatus(event: Event) {
-  const hasParticipation = event.myParticipation !== null;
-  const isOpen = event.status === "PUBLISHED";
-  const canRequest = !hasParticipation && isOpen && event.spotsLeft > 0;
+/**
+ * What the viewer can do on the event detail screen:
+ * - `edit`: organizer actions (Edit / Publish a draft / Cancel event)
+ * - `request`: request to join
+ * - `pending`: request sent, waiting for the organizer
+ * - `cancel-request`: approved; may cancel participation
+ * - `full`: no spots left
+ * - `closed`: the event is cancelled or completed
+ * - `none`: nothing to do (rejected / cancelled participation cannot re-request)
+ */
+export type EventAction =
+  | "edit"
+  | "request"
+  | "cancel-request"
+  | "pending"
+  | "full"
+  | "closed"
+  | "none";
 
-  let requestLabel = "Request to Join";
-  if (hasParticipation) requestLabel = "Already Requested";
-  else if (!isOpen) requestLabel = EVENT_STATUS_STYLE[event.status].label;
-  else if (event.spotsLeft <= 0) requestLabel = "Event is Full";
+export function getEventAction(event: Event, viewerId: string | null | undefined): EventAction {
+  if (event.status === "CANCELLED" || event.status === "COMPLETED") return "closed";
+  if (viewerId && event.organizer.id === viewerId) return "edit";
 
-  return { status: EVENT_STATUS_STYLE[event.status], canRequest, requestLabel };
+  switch (event.myParticipation) {
+    case "REQUESTED":
+      return "pending";
+    case "APPROVED":
+      return "cancel-request";
+    case null:
+      break;
+    default:
+      return "none";
+  }
+
+  if (event.status !== "PUBLISHED") return "none";
+  return event.spotsLeft > 0 ? "request" : "full";
 }

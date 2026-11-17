@@ -3,18 +3,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { Event } from "@/entities/event";
 import { CancelEventModal } from "@/features/cancel-event";
-import {
-  AlreadyRequestedModal,
-  RequestSentModal,
-} from "@/features/request-participation";
+import { RequestSentModal } from "@/features/request-participation";
 import { BrandGradient } from "@/shared/ui";
 
 import { useEventDetail } from "../model/useEventDetail";
 
-import { CancelButton } from "./CancelButton";
+import { EventActions } from "./EventActions";
 import { EventHeader } from "./EventHeader";
 import { EventInfoCard } from "./EventInfoCard";
-import { RequestButton } from "./RequestButton";
 
 type Props = {
   event: Event;
@@ -23,8 +19,7 @@ type Props = {
 
 export function EventDetail({ event, onBack }: Props) {
   const insets = useSafeAreaInsets();
-  const { isOrganizer, request, cancel } = useEventDetail(event);
-  const canCancel = event.status === "DRAFT" || event.status === "PUBLISHED";
+  const { action, request, cancel, publish, onEdit } = useEventDetail(event);
 
   return (
     <BrandGradient style={{ flex: 1 }}>
@@ -40,14 +35,17 @@ export function EventDetail({ event, onBack }: Props) {
       >
         <EventHeader event={event} onBack={onBack} />
         <EventInfoCard event={event} />
-        {!isOrganizer && (
-          <RequestButton
-            event={event}
-            onPress={request.onRequestPress}
-            loading={request.isRequesting}
-          />
-        )}
-        {isOrganizer && canCancel && <CancelButton onPress={cancel.onCancelOpen} />}
+        <EventActions
+          event={event}
+          action={action}
+          isRequesting={request.isRequesting}
+          isPublishing={publish.isPublishing}
+          isCancelling={cancel.isCancelling}
+          onRequest={request.onRequestPress}
+          onEdit={onEdit}
+          onPublish={publish.onPublish}
+          onCancelEvent={cancel.onCancelOpen}
+        />
       </ScrollView>
 
       <RequestSentModal
@@ -61,12 +59,6 @@ export function EventDetail({ event, onBack }: Props) {
         eventName={event.name}
         onConfirm={cancel.onCancelEvent}
         onCancel={cancel.onCancelClose}
-      />
-
-      <AlreadyRequestedModal
-        visible={request.warnVisible}
-        eventName={event.name}
-        onClose={request.onWarnClose}
       />
     </BrandGradient>
   );

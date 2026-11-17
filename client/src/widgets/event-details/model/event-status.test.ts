@@ -1,7 +1,10 @@
 import type { Event } from "@/entities/event";
 
 import { getEventCapacity } from "./event-capacity";
-import { getEventStatus } from "./event-status";
+import { getEventAction } from "./event-status";
+
+const ORGANIZER = "o";
+const VIEWER = "v";
 
 const event = (over: Partial<Event> = {}): Event => ({
   id: "e1",
@@ -20,28 +23,37 @@ const event = (over: Partial<Event> = {}): Event => ({
   price: null,
   language: { code: "en", name: "English" },
   status: "PUBLISHED",
-  organizer: { id: "o", name: "Organizer", avatarUrl: undefined },
+  organizer: { id: ORGANIZER, name: "Organizer", avatarUrl: undefined },
   myParticipation: null,
   createdAt: "2029-01-01T00:00:00.000Z",
   ...over,
 });
 
-describe("getEventStatus", () => {
-  it("lets users request a published event they have not joined", () => {
-    expect(getEventStatus(event())).toMatchObject({
-      canRequest: true,
-      requestLabel: "Request to Join",
-    });
+describe("getEventAction", () => {
+  it.each<[string, Partial<Event>, string | null, ReturnType<typeof getEventAction>]>([
+    ["organizer of a published event", {}, ORGANIZER, "edit"],
+    ["organizer of a draft", { status: "DRAFT" }, ORGANIZER, "edit"],
+    ["organizer of a full event", { spotsLeft: 0, participantCount: 4 }, ORGANIZER, "edit"],
+    ["stranger on a published event with room", {}, VIEWER, "request"],
+    ["own REQUESTED participation", { myParticipation: "REQUESTED" }, VIEWER, "pending"],
+    ["own APPROVED participation", { myParticipation: "APPROVED" }, VIEWER, "cancel-request"],
+    ["stranger on a full event", { spotsLeft: 0, participantCount: 4 }, VIEWER, "full"],
+    ["approved on a full event", { spotsLeft: 0, myParticipation: "APPROVED" }, VIEWER, "cancel-request"],
+    ["cancelled event", { status: "CANCELLED" }, VIEWER, "closed"],
+    ["completed event", { status: "COMPLETED" }, VIEWER, "closed"],
+    ["organizer of a cancelled event", { status: "CANCELLED" }, ORGANIZER, "closed"],
+    ["organizer of a completed event", { status: "COMPLETED" }, ORGANIZER, "closed"],
+    ["approved on a cancelled event", { status: "CANCELLED", myParticipation: "APPROVED" }, VIEWER, "closed"],
+    ["REJECTED participation (cannot re-request)", { myParticipation: "REJECTED" }, VIEWER, "none"],
+    ["CANCELLED participation (cannot re-request)", { myParticipation: "CANCELLED" }, VIEWER, "none"],
+    ["stranger on a draft", { status: "DRAFT" }, VIEWER, "none"],
+  ])("%s", (_name, over, viewerId, expected) => {
+    expect(getEventAction(event(over), viewerId)).toBe(expected);
   });
 
-  it.each([
-    [{ myParticipation: "REQUESTED" as const }, "Already Requested"],
-    [{ myParticipation: "REJECTED" as const }, "Already Requested"],
-    [{ spotsLeft: 0, participantCount: 4 }, "Event is Full"],
-    [{ status: "CANCELLED" as const }, "Cancelled"],
-    [{ status: "COMPLETED" as const }, "Completed"],
-  ])("blocks requesting: %j", (over, label) => {
-    expect(getEventStatus(event(over))).toMatchObject({ canRequest: false, requestLabel: label });
+  it("treats a signed-out viewer as a stranger", () => {
+    expect(getEventAction(event(), null)).toBe("request");
+    expect(getEventAction(event(), undefined)).toBe("request");
   });
 });
 

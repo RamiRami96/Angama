@@ -12,8 +12,8 @@ export function useCancelEventMutation() {
     onError: notifyError("Couldn't cancel event"),
     onSuccess: (event) => {
       queryClient.setQueryData(queryKeys.events.detail(event.id), event);
-      queryClient.invalidateQueries({ queryKey: queryKeys.events.lists });
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.myEvents("organizer") });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.myEventsAll });
     },
   });
 }

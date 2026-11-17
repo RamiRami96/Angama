@@ -1,9 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 
-import type { Event } from "@/entities/event";
-
-import { getEventStatus } from "../model/event-status";
+import { EVENT_STATUS_STYLE, EventCover, type Event } from "@/entities/event";
 
 type Props = {
   event: Event;
@@ -11,19 +9,21 @@ type Props = {
 };
 
 export function EventHeader({ event, onBack }: Props) {
-  const { status } = getEventStatus(event);
+  const status = EVENT_STATUS_STYLE[event.status];
 
   return (
     <>
-      <Pressable
-        onPress={onBack}
-        className="flex-row items-center gap-2 active:opacity-70 self-start"
-      >
+      <Pressable onPress={onBack} className="flex-row items-center gap-2 active:opacity-70 self-start">
         <Ionicons name="arrow-back" size={22} color="#fff" />
         <Text className="text-white font-medium text-base">Back</Text>
       </Pressable>
 
+      <EventCover uri={event.coverImageUrl} height={190} rounded />
+
       <View style={{ gap: 6 }}>
+        <Text className="text-white/60 text-xs font-semibold uppercase tracking-widest">
+          {event.category.name}
+        </Text>
         <View className="flex-row items-start gap-3">
           <Text className="text-white font-bold text-3xl flex-1">{event.name}</Text>
           <View className={`px-3 py-1 rounded-full mt-1 ${status.bg}`}>

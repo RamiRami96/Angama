@@ -4,13 +4,17 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 
 import { useVisibility } from "@/shared/lib";
 
+import { toLocalDateTime } from "../model/create-event.model";
+
 type Props = {
   label: string;
+  /** Local date-time, `YYYY-MM-DDTHH:mm` (or empty). */
   value: string;
   onChange: (v: string) => void;
+  error?: string;
 };
 
-export function DateTimePickerField({ label, value, onChange }: Props) {
+export function DateTimePickerField({ label, value, onChange, error }: Props) {
   const { visible, show, hide } = useVisibility();
 
   const dateValue = value ? new Date(value) : undefined;
@@ -22,10 +26,7 @@ export function DateTimePickerField({ label, value, onChange }: Props) {
 
   const handleConfirm = (date: Date) => {
     hide();
-    const pad = (n: number) => String(n).padStart(2, "0");
-    onChange(
-      `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
-    );
+    onChange(toLocalDateTime(date));
   };
 
   return (
@@ -41,6 +42,7 @@ export function DateTimePickerField({ label, value, onChange }: Props) {
           {displayText ?? "Select date & time"}
         </Text>
       </Pressable>
+      {error && <Text className="text-red-300 text-xs ml-1">{error}</Text>}
       <DateTimePickerModal
         isVisible={visible}
         mode="datetime"

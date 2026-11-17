@@ -1,14 +1,29 @@
+import { useRouter } from "expo-router";
+
 import type { Event } from "@/entities/event";
 import { useCurrentUser } from "@/entities/user";
+import { usePublishEventMutation } from "@/features/publish-event";
 
+import { getEventAction } from "./event-status";
 import { useEventCancel } from "./useEventCancel";
 import { useEventRequest } from "./useEventRequest";
 
 export function useEventDetail(event: Event) {
+  const router = useRouter();
   const currentUser = useCurrentUser();
-  const isOrganizer = currentUser?.id === event.organizer.id;
-  const request = useEventRequest(event, event.myParticipation !== null);
+  const action = getEventAction(event, currentUser?.id);
+  const request = useEventRequest(event);
   const cancel = useEventCancel(event);
+  const publishMutation = usePublishEventMutation();
 
-  return { isOrganizer, request, cancel };
+  return {
+    action,
+    request,
+    cancel,
+    publish: {
+      isPublishing: publishMutation.isPending,
+      onPublish: () => publishMutation.mutate(event.id),
+    },
+    onEdit: () => router.push(`/events/${event.id}/edit`),
+  };
 }
