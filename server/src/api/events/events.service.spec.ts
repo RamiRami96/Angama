@@ -202,6 +202,15 @@ describe('EventsService.getOne', () => {
       status: 'DRAFT',
     });
   });
+
+  it('completes finished events before reading the detail', async () => {
+    const { service, db } = setup();
+    await service.getOne('e1');
+    expect(db.event.updateMany).toHaveBeenCalled();
+    expect(db.event.updateMany.mock.invocationCallOrder[0]).toBeLessThan(
+      db.event.findUnique.mock.invocationCallOrder[0],
+    );
+  });
 });
 
 describe('EventsService.create', () => {
@@ -271,6 +280,16 @@ describe('EventsService.update', () => {
       ).rejects.toBeInstanceOf(ConflictException);
       expect(tx.event.update).not.toHaveBeenCalled();
     }
+  });
+
+  it('refuses to edit a stored-PUBLISHED event that has ended', async () => {
+    const { service, tx } = setup(
+      eventRow({ status: 'PUBLISHED', startsAt: past, endsAt: past }),
+    );
+    await expect(
+      service.update('e1', 'org', { name: 'x' }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(tx.event.update).not.toHaveBeenCalled();
   });
 
   it('refuses a status change (publish/cancel endpoints only)', async () => {
@@ -392,6 +411,20 @@ describe('EventsService.publish', () => {
     );
   });
 
+  it('409s for a DRAFT whose end has passed', async () => {
+    const { service, tx } = setup(
+      eventRow({
+        status: 'DRAFT',
+        startsAt: new Date(past.getTime() - HOUR),
+        endsAt: past,
+      }),
+    );
+    await expect(service.publish('e1', 'org')).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+    expect(tx.event.update).not.toHaveBeenCalled();
+  });
+
   it('only lets the organizer publish', async () => {
     const { service } = setup(eventRow({ status: 'DRAFT' }));
     await expect(service.publish('e1', 'x')).rejects.toBeInstanceOf(
@@ -476,6 +509,22 @@ describe('EventsService.cancel', () => {
     await expect(service.cancel('e1', 'org')).rejects.toBeInstanceOf(
       ConflictException,
     );
+  });
+
+  it('refuses to cancel a stored-PUBLISHED event that has ended, without notifying', async () => {
+    const { service, tx } = setup(
+      eventRow({
+        status: 'PUBLISHED',
+        startsAt: new Date(past.getTime() - HOUR),
+        endsAt: past,
+      }),
+    );
+    tx.eventParticipant.findMany.mockResolvedValue([{ userId: 'u1' }]);
+    await expect(service.cancel('e1', 'org')).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+    expect(tx.event.update).not.toHaveBeenCalled();
+    expect(tx.notification.createMany).not.toHaveBeenCalled();
   });
 
   it('only lets the organizer cancel', async () => {

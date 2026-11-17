@@ -95,16 +95,28 @@ describe('ParticipationsService.request', () => {
     expect(tx.eventParticipant.create).not.toHaveBeenCalled();
   });
 
-  it.each(['DRAFT', 'CANCELLED', 'COMPLETED'])(
-    'rejects a %s event',
-    async (status) => {
-      const { service, tx } = setup(eventRow({ status }));
-      await expect(service.request('e1', 'u1')).rejects.toThrow(
-        'Event is not open',
-      );
-      expect(tx.eventParticipant.create).not.toHaveBeenCalled();
-    },
-  );
+  it("404s for someone else's DRAFT (no existence leak)", async () => {
+    const { service, tx } = setup(eventRow({ status: 'DRAFT' }));
+    await expect(service.request('e1', 'u1')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(tx.eventParticipant.create).not.toHaveBeenCalled();
+  });
+
+  it('still forbids the organizer on their own DRAFT', async () => {
+    const { service } = setup(eventRow({ status: 'DRAFT' }));
+    await expect(service.request('e1', 'org')).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+  });
+
+  it.each(['CANCELLED', 'COMPLETED'])('rejects a %s event', async (status) => {
+    const { service, tx } = setup(eventRow({ status }));
+    await expect(service.request('e1', 'u1')).rejects.toThrow(
+      'Event is not open',
+    );
+    expect(tx.eventParticipant.create).not.toHaveBeenCalled();
+  });
 
   it('rejects a PUBLISHED event that has already started (stale status)', async () => {
     const { service, tx } = setup(eventRow({ startsAt: past }));

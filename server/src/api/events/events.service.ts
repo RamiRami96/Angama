@@ -19,6 +19,7 @@ import type {
 } from '../../contracts';
 import { PrismaService } from '../../prisma/prisma.service';
 import { parseEventDetails } from './event-details';
+import { hasEnded } from './event-time';
 import {
   CONFIRMED_STATUSES,
   EVENT_INCLUDE,
@@ -67,6 +68,8 @@ export class EventsService {
   }
 
   async getOne(id: string, viewerId?: string): Promise<EventDto> {
+    await this.completeFinished();
+
     const row = await this.prisma.event.findUnique({
       where: { id },
       include: EVENT_INCLUDE,
@@ -134,7 +137,7 @@ export class EventsService {
 
     return this.prisma.$transaction(async (tx) => {
       const event = await this.lockEvent(tx, id);
-      if (!OPEN_STATUSES.includes(event.status)) {
+      if (!OPEN_STATUSES.includes(event.status) || hasEnded(event)) {
         throw new ConflictException('Event can no longer be edited');
       }
       if (dto.status !== undefined && dto.status !== event.status) {
@@ -202,6 +205,9 @@ export class EventsService {
       if (event.status !== EventStatus.DRAFT) {
         throw new ConflictException('Only a draft can be published');
       }
+      if (hasEnded(event)) {
+        throw new ConflictException('Event has already ended');
+      }
       if (event.startsAt.getTime() <= Date.now()) {
         throw new BadRequestException('Start must be in the future');
       }
@@ -223,7 +229,7 @@ export class EventsService {
 
     return this.prisma.$transaction(async (tx) => {
       const event = await this.lockEvent(tx, id);
-      if (!OPEN_STATUSES.includes(event.status)) {
+      if (!OPEN_STATUSES.includes(event.status) || hasEnded(event)) {
         throw new ConflictException('Event can no longer be cancelled');
       }
 

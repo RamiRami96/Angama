@@ -22,8 +22,15 @@ export const boardGamesDetailsSchema = z.object({
 });
 
 export const eventBaseSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required'),
-  description: z.string().trim(),
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Name is required')
+    .max(120, 'Name must be at most 120 characters'),
+  description: z
+    .string()
+    .trim()
+    .max(5000, 'Description must be at most 5000 characters'),
   category: z.enum(EVENT_CATEGORY_CODES),
   // http(s) only. `null` removes the cover.
   coverImageUrl: z
@@ -32,13 +39,28 @@ export const eventBaseSchema = z.object({
     .optional(),
   startsAt: z.iso.datetime({ error: 'Invalid start date' }),
   endsAt: z.iso.datetime({ error: 'Invalid end date' }),
-  city: z.string().trim().min(1, 'City is required'),
-  address: z.string().trim().min(1, 'Address is required'),
+  city: z
+    .string()
+    .trim()
+    .min(1, 'City is required')
+    .max(100, 'City must be at most 100 characters'),
+  address: z
+    .string()
+    .trim()
+    .min(1, 'Address is required')
+    .max(300, 'Address must be at most 300 characters'),
   maxParticipants: z
     .number()
     .int('Max participants must be a whole number')
-    .min(1, 'Max participants must be at least 1'),
-  price: z.number().min(0, 'Price cannot be negative').nullable().optional(),
+    .min(1, 'Max participants must be at least 1')
+    .max(10_000, 'Max participants must be at most 10000'),
+  // Fits the Decimal(10,2) column.
+  price: z
+    .number()
+    .min(0, 'Price cannot be negative')
+    .max(99_999_999.99, 'Price is too high')
+    .nullable()
+    .optional(),
   language: z.string().trim().min(1, 'Language is required'),
   status: z.enum(['DRAFT', 'PUBLISHED']).default('PUBLISHED'),
 });

@@ -11,6 +11,7 @@ import {
   ParticipationStatus,
 } from '../../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
+import { hasEnded } from './event-time';
 import { CONFIRMED_STATUSES } from './events.mapper';
 import { EventsService } from './events.service';
 import {
@@ -32,18 +33,6 @@ const CANCELLABLE: ParticipationStatus[] = [
   ParticipationStatus.REQUESTED,
   ParticipationStatus.APPROVED,
 ];
-
-type LockedEvent = { status: EventStatus; startsAt: Date; endsAt: Date };
-
-/**
- * Event completion is lazy (`completeFinished`), so a stored PUBLISHED status
- * may be stale: the times decide too.
- */
-function hasEnded(event: LockedEvent, now = Date.now()): boolean {
-  return (
-    event.status === EventStatus.COMPLETED || event.endsAt.getTime() <= now
-  );
-}
 
 /**
  * Joining an event and the organizer's decisions on requests. Every state
@@ -71,6 +60,10 @@ export class ParticipationsService {
       const event = await this.events.lockEvent(tx, eventId);
       if (event.organizerId === userId) {
         throw new ForbiddenException('You cannot join your own event');
+      }
+      if (event.status === EventStatus.DRAFT) {
+        // Drafts are invisible to everyone but their organizer.
+        throw new NotFoundException('Event not found');
       }
       if (event.status !== EventStatus.PUBLISHED) {
         throw new ConflictException('Event is not open');

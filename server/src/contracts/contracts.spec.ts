@@ -108,6 +108,33 @@ describe('event contracts', () => {
     expect(result.data).toEqual({ details: { game: 'Catan' } });
   });
 
+  it.each([
+    ['a name over 120 chars', { name: 'x'.repeat(121) }],
+    ['a description over 5000 chars', { description: 'x'.repeat(5001) }],
+    ['a city over 100 chars', { city: 'x'.repeat(101) }],
+    ['an address over 300 chars', { address: 'x'.repeat(301) }],
+    ['maxParticipants 10001', { maxParticipants: 10_001 }],
+    ['price 1e9', { price: 1e9 }],
+  ])('rejects %s (create and update)', (_label, over) => {
+    expect(
+      createEventSchema.safeParse({ ...boardGames, ...over }).success,
+    ).toBe(false);
+    expect(updateEventSchema.safeParse(over).success).toBe(false);
+  });
+
+  it('accepts values at the bounds', () => {
+    const result = createEventSchema.safeParse({
+      ...boardGames,
+      name: 'x'.repeat(120),
+      description: 'x'.repeat(5000),
+      city: 'x'.repeat(100),
+      address: 'x'.repeat(300),
+      maxParticipants: 10_000,
+      price: 99_999_999.99,
+    });
+    expect(result.success).toBe(true);
+  });
+
   it('listEventsQuerySchema rejects a non ISO date', () => {
     expect(
       listEventsQuerySchema.safeParse({ date: '12/05/2026' }).success,
